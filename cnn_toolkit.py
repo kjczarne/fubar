@@ -1,3 +1,8 @@
+import keras.backend as K
+import glob
+from decimal import Decimal
+from keras.callbacks import Callback
+
 def filepattern(pattern, extension, defaulttag, analysistype=""):
     """
     generates pattern names for efficient exporting of files, great for iterative saving of model parameters as HDF5
@@ -39,3 +44,13 @@ def filepattern(pattern, extension, defaulttag, analysistype=""):
     else:
         filename = pattern + newtag + analysistype + extension
     return filename
+
+
+
+class Precision(Callback):
+    def __init__(self):
+        pass
+
+class Recall(Callback):
+    def __init__(self):
+        pass
