@@ -11,7 +11,8 @@ import numpy as np
 
 import neptune as npt
 
-from .cnn_toolkit import Precision, Recall, filepattern, NeptuneMonitor, pool_generator_classes
+from .cnn_toolkit import Precision, Recall, filepattern, NeptuneMonitor, \
+    pool_generator_classes, show_architecture, frosty
 
 # -----------------------------
 # OPTIONAL: INITIALIZE NEPTUNE |
@@ -101,34 +102,13 @@ model = Model(inputs=base.input, outputs=y_pred)
 # --------------
 # FREEZE LAYERS |
 # --------------
-def freeze_layers(layer_iterable, view='len'):
-    """
-    freezes layers specified in the iterable passed to the function
-    :param layer_iterable: an iterable of Keras layers with .trainable property
-    :param view: switches return mode, can be 'len' or 'index'
-    :return: returns number of frozen layers if view=='len', if view=='index' returns indices of all frozen layers
-    """
-    idx_record = []
-    for idx, layer in enumerate(layer_iterable):
-        assert layer.trainable is not None, "Item passed as layer has no property 'trainable'"
-        layer.trainable = False
-        idx_record.append(idx)
-
-    if view == 'len':
-        return "Number of frozen layers: {}".format(len(idx_record))
-    elif view == 'index':
-        return "Frozen layers: {}".format(idx_record)
-    else:
-        pass
-
-
-freeze_layers(base.layers)  # this will freeze all base model layers
+frosty(base.layers)  # this will freeze all base model layers
 # ---------------------------------------------------------------------------------------------------------------------
 
 # -----------------------------------
 # COMPILE MODEL AND SET UP CALLBACKS |
 # -----------------------------------
-# always compile model after layers have been frozen
+# always compile model AFTER layers have been frozen
 
 model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc', 'mae'])
 precision = Precision()
@@ -138,10 +118,9 @@ npt_monitor = NeptuneMonitor()
 # ---------------------------------------------------------------------------------------------------------------------
 
 
-# ----
-# FIT |
-# ----
-
+# ---------------------------------------------
+# TRAIN TOP LAYERS ON NEW DATA FOR A FEW EPOCHS|
+# ---------------------------------------------
 model.fit_generator(training_generator,
                     steps_per_epoch=(TRAIN_SIZE / BATCH_SIZE),  # number of samples in the dataset
                     epochs=EPOCHS,  # number of epochs, training cycles
@@ -152,10 +131,31 @@ model.fit_generator(training_generator,
 # thus we use precision and recall functions as callbacks
 # ---------------------------------------------------------------------------------------------------------------------
 
-# ---------------------
-# RETRAINING THE MODEL |
-# ---------------------
-# todo - second training loop
+# -------------------------------------------------------------
+# VISUALIZE BASE ARCHITECTURE TO DECIDE WHICH LAYERS TO FREEZE |
+# -------------------------------------------------------------
+print(show_architecture(base))
+# INSERT DEBUGGER BREAKPOINT DIRECTLY ON THE NEXT COMMAND TO VIEW THE ARCHITECTURE AT RUNTIME
+# ---------------------------------------------------------------------------------------------------------------------
+
+# --------------
+# FREEZE LAYERS |
+# --------------
+# for now I just pass a slice of layers used in Keras documentation
+frosty(model.layers[:249], frost=True)
+frosty(model.layers[249:], frost=False)
+
+# ------------------------------------
+# COMPILE MODEL AGAIN AND TRAIN AGAIN |
+# ------------------------------------
+# always compile model AFTER layers have been frozen
+model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc', 'mae'])
+model.fit_generator(training_generator,
+                    steps_per_epoch=(TRAIN_SIZE / BATCH_SIZE),  # number of samples in the dataset
+                    epochs=EPOCHS,  # number of epochs, training cycles
+                    validation_data=validation_generator,  # performance eval on test set
+                    validation_steps=(TEST_SIZE / BATCH_SIZE),
+                    callbacks=[history, precision, recall, npt_monitor])
 
 # --------------------------------------
 # EXPORT MODEL ARCHITECTURE AND WEIGHTS |

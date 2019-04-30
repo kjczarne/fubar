@@ -51,6 +51,9 @@ def filepattern(pattern, extension, defaulttag='0.0', analysistype=""):
 
 
 class Precision(Callback):
+    """
+    Keras Callback. Calculates precision metrics at the end of each epoch.
+    """
     def __init__(self):
         super().__init__()
         self.precisions = []
@@ -68,6 +71,9 @@ class Precision(Callback):
 
 
 class Recall(Callback):
+    """
+    Keras Callback. Calculates recall metrics at the end of each epoch.
+    """
     def __init__(self):
         super().__init__()
         self.recalls = []
@@ -116,3 +122,35 @@ def pool_generator_classes(data_generator, class_pool_mapping):
     for img, label in data_generator:
         label = class_pool_mapping[label]
         yield img, label
+
+
+def show_architecture(base_model):
+    """
+    shows all enumerated layers and their names in the model architecture
+    :param base_model: base model used in transfer learning to be inspected
+    :return: a generator of (idx, layer.name) tuples
+    """
+    for idx, layer in enumerate(base_model.layers):
+        yield (idx, layer.name)
+
+
+def frosty(layer_iterable, view='len', frost=True):
+    """
+    freezes/unfreezes layers specified in the iterable passed to the function
+    :param layer_iterable: an iterable of Keras layers with .trainable property
+    :param view: switches return mode, can be 'len' or 'index'
+    :param frost: boolean value, freezes layers if True, unfreezes when False
+    :return: returns number of frozen layers if view=='len', if view=='index' returns indices of all frozen layers
+    """
+    idx_record = []
+    for idx, layer in enumerate(layer_iterable):
+        assert layer.trainable is not None, "Item passed as layer has no property 'trainable'"
+        layer.trainable = ~frost
+        idx_record.append(idx)
+
+    if view == 'len':
+        return "Number of frozen layers: {}".format(len(idx_record))
+    elif view == 'index':
+        return "Frozen layers: {}".format(idx_record)
+    else:
+        pass
