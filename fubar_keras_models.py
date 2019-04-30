@@ -5,22 +5,26 @@ from keras.models import Model
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import History
 
+from pathlib import Path
+
 import PIL
 import os
 import numpy as np
 
 import neptune as npt
 
-from .cnn_toolkit import Precision, Recall, filepattern, NeptuneMonitor, \
+from cnn_toolkit import Precision, Recall, filepattern, NeptuneMonitor, \
     pool_generator_classes, show_architecture, frosty
+
+npt_token=''
+npt_project = 'user/fubar'
 
 # -----------------------------
 # OPTIONAL: INITIALIZE NEPTUNE |
 # -----------------------------
-# npt.init(api_token='insert_token_here',
-#          project_qualified_name='user/fubar')
-# npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses to prevent neptune from reading code
-# npt_monitor = NeptuneMonitor()
+npt.init(api_token=npt_token,
+         project_qualified_name=npt_project)
+npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses to prevent neptune from reading code
 
 # -----------
 # BASE MODEL |
@@ -35,49 +39,47 @@ base = InceptionV3(weights='imagenet', include_top=False)
 INPUT_H = 280
 INPUT_W = 280
 BATCH_SIZE = 32
-TRAIN_SIZE = 0
-TEST_SIZE = 0
-EPOCHS = 10
+TRAIN_SIZE = ((124+91+24+25) * 8) // 10
+TEST_SIZE = ((124+91+24+25) * 2) // 10
+EPOCHS = 1
 # ---------------------------------------------------------------------------------------------------------------------
 
 # ---------------------
 # HERE LIVE THE IMAGES |
 # ---------------------
 
-path_to_archive = '/kjczarne/Downloads/FubarArchive/'
+path_to_archive = Path.home() / Path('Downloads/FubarArchive/')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # -------------------
 # DATA PREPROCESSING |
 # -------------------
-training_datagen = ImageDataGenerator(
+image_datagen = ImageDataGenerator(
         rescale=1./255,
         shear_range=0.2,
         zoom_range=0.4,
         horizontal_flip=True,
         validation_split=0.2)
 
-validation_datagen = ImageDataGenerator(rescale=1./255)
-
-# Pool classes to exclude U-bar/LoopLock differentiation for the first model
-class_pool_mapping = np.array([0, 0, 1, 1])
-training_datagen= pool_generator_classes(training_datagen, class_pool_mapping)
-validation_datagen = pool_generator_classes(validation_datagen, class_pool_mapping)
-
-training_generator = training_datagen.flow_from_directory(
+training_generator = image_datagen.flow_from_directory(
                 path_to_archive,
                 target_size=(INPUT_H, INPUT_W),
                 batch_size=BATCH_SIZE,
-                class_mode='binary',
+                class_mode='sparse',
                 subset='training')
 
-validation_generator = validation_datagen.flow_from_directory(
+validation_generator = image_datagen.flow_from_directory(
                 path_to_archive,
                 target_size=(INPUT_H, INPUT_W),
                 batch_size=BATCH_SIZE,
-                class_mode='binary',
+                class_mode='sparse',
                 subset='validation')
+
+# Pool classes to exclude U-bar/LoopLock differentiation for the first model
+class_pool_mapping = {0: 0, 1: 0, 2: 1, 3: 1}
+pool_generator_classes(training_generator, class_pool_mapping)
+pool_generator_classes(validation_generator, class_pool_mapping)
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -88,8 +90,8 @@ validation_generator = validation_datagen.flow_from_directory(
 # -------------------
 y = base.output
 y = GlobalAveragePooling2D()(y)
-y = Dense(1024, activation='relu')(y)
-y_pred = Dense(2, activation='sigmoid')(y)
+y = Dense(1024, activation='relu', name='my_dense_1024')(y)
+y_pred = Dense(2, activation='sigmoid', name='output_dense')(y)
 # ---------------------------------------------------------------------------------------------------------------------
 
 
@@ -110,11 +112,11 @@ frosty(base.layers)  # this will freeze all base model layers
 # -----------------------------------
 # always compile model AFTER layers have been frozen
 
-model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc', 'mae'])
+model.compile(optimizer='rmsprop', loss='sparse_categorical_crossentropy', metrics=['acc', 'mae'])
 precision = Precision()
 recall = Recall()
 history = History()
-npt_monitor = NeptuneMonitor()
+npt_monitor = NeptuneMonitor(BATCH_SIZE)
 # ---------------------------------------------------------------------------------------------------------------------
 
 
@@ -138,6 +140,14 @@ print(show_architecture(base))
 # INSERT DEBUGGER BREAKPOINT DIRECTLY ON THE NEXT COMMAND TO VIEW THE ARCHITECTURE AT RUNTIME
 # ---------------------------------------------------------------------------------------------------------------------
 
+# ------------------------
+# STOP NEPTUNE EXPERIMENT |
+# ------------------------
+npt.stop()
+
+# ======================================================================================================================
+# ======================================================================================================================
+
 # --------------
 # FREEZE LAYERS |
 # --------------
@@ -145,11 +155,20 @@ print(show_architecture(base))
 frosty(model.layers[:249], frost=True)
 frosty(model.layers[249:], frost=False)
 
+# -----------------------------
+# OPTIONAL: INITIALIZE NEPTUNE |
+# -----------------------------
+npt.init(api_token=npt_token,
+         project_qualified_name=npt_project)
+npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses to prevent neptune from reading code
+npt_monitor = NeptuneMonitor(BATCH_SIZE)
+
+
 # ------------------------------------
 # COMPILE MODEL AGAIN AND TRAIN AGAIN |
 # ------------------------------------
 # always compile model AFTER layers have been frozen
-model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc', 'mae'])
+model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['loss', 'acc'])
 model.fit_generator(training_generator,
                     steps_per_epoch=(TRAIN_SIZE / BATCH_SIZE),  # number of samples in the dataset
                     epochs=EPOCHS,  # number of epochs, training cycles
@@ -176,3 +195,5 @@ model.save_weights(w_filename)
 # STOP NEPTUNE EXPERIMENT |
 # ------------------------
 # npt.stop()
+# ======================================================================================================================
+# ======================================================================================================================
