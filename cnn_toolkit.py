@@ -2,8 +2,12 @@ import keras.backend as K
 import glob
 from decimal import Decimal
 from keras.callbacks import Callback
+from sklearn.metrics import precision_score, recall_score
+import neptune as npt
+import numpy as np
 
-def filepattern(pattern, extension, defaulttag, analysistype=""):
+
+def filepattern(pattern, extension, defaulttag='0.0', analysistype=""):
     """
     generates pattern names for efficient exporting of files, great for iterative saving of model parameters as HDF5
     and architechtures as JSON when working with keras
@@ -46,11 +50,69 @@ def filepattern(pattern, extension, defaulttag, analysistype=""):
     return filename
 
 
-
 class Precision(Callback):
     def __init__(self):
-        pass
+        super().__init__()
+        self.precisions = []
+
+    def on_train_begin(self, logs={}):
+        self.precisions = []
+
+    def on_epoch_end(self, epoch, logs={}):
+        y_pred = (np.asarray(self.model.predict(self.model.validation_data[0]))).round()
+        y_true = self.model.validation_data[1]
+        precision = precision_score(y_true, y_pred)
+        self.precisions.append(precision)
+        print("validation set precision at epoch {}: {}".format(epoch, precision))
+        return self.precisions
+
 
 class Recall(Callback):
     def __init__(self):
-        pass
+        super().__init__()
+        self.recalls = []
+
+    def on_train_begin(self, logs={}):
+        self.recalls = []
+
+    def on_epoch_end(self, epoch, logs={}):
+        y_pred = (np.asarray(self.model.predict(self.model.validation_data[0]))).round()
+        y_true = self.model.validation_data[1]
+        recall = recall_score(y_true, y_pred)
+        self.recalls.append(recall)
+        print("validation set recall at epoch {}: {}".format(epoch, recall))
+        return self.recalls
+
+
+class NeptuneMonitor(Callback):
+    def __init__(self):
+        super().__init__()
+        self.current_epoch = 0
+
+    def on_batch_end(self, batch, logs=None):
+        x = (self.current_epoch * n_batches) + batch
+        npt.send_metric('batch end accuracy', x=x, y=logs['acc'])
+        npt.send_metric('batch end loss', x=x, y=logs['loss'])
+
+    def on_epoch_end(self, epoch, logs=None):
+        npt.send_metric('epoch end accuracy', x=epoch, y=logs['acc'])
+        npt.send_metric('epoch end loss', x=epoch, y=logs['loss'])
+        npt.send_metric('validation epoch end precision', x=epoch, y=logs['precision'])
+        npt.send_metric('validation epoch end recall', x=epoch, y=logs['recall'])
+        self.current_epoch += 1
+
+
+def pool_generator_classes(data_generator, class_pool_mapping):
+    """
+    say we have 4 classes that we want to merge into 2; this function will take turn the label stored in data_generator
+    into a label picked from a class_pool_mapping list corresponding to its index; to pool [0, 1, 2, 3] existing labels
+    where [0, 1] are supposed to be a new class 0 and [2, 3] a new class 1, you can pass [0, 0, 1, 1]
+    as class_pool_mapping; so e.g. class_pool_mapping[2] will turn the label 2 into label 1, class_pool_mapping[1]
+    will turn the label 0 into 1 and so on
+    :param data_generator: keras.preprocessing.image.ImageDataGenerator
+    :param class_pool_mapping: a list mapping new labels
+    :return:
+    """
+    for img, label in data_generator:
+        label = class_pool_mapping[label]
+        yield img, label

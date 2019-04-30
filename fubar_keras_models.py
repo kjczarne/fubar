@@ -3,15 +3,15 @@ from keras.layers import GlobalAveragePooling2D, Dense
 from keras.preprocessing import image
 from keras.models import Model
 from keras.preprocessing.image import ImageDataGenerator
-from keras import metrics
-
-from IPython.display import display
+from keras.callbacks import History
 
 import PIL
-import neptune as npt
 import os
+import numpy as np
 
-from .cnn_toolkit import Precision, Recall, filepattern
+import neptune as npt
+
+from .cnn_toolkit import Precision, Recall, filepattern, NeptuneMonitor, pool_generator_classes
 
 # -----------------------------
 # OPTIONAL: INITIALIZE NEPTUNE |
@@ -19,6 +19,7 @@ from .cnn_toolkit import Precision, Recall, filepattern
 # npt.init(api_token='insert_token_here',
 #          project_qualified_name='user/fubar')
 # npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses to prevent neptune from reading code
+# npt_monitor = NeptuneMonitor()
 
 # -----------
 # BASE MODEL |
@@ -42,29 +43,42 @@ EPOCHS = 10
 # HERE LIVE THE IMAGES |
 # ---------------------
 
+path_to_archive = '/kjczarne/Downloads/FubarArchive/'
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # -------------------
 # DATA PREPROCESSING |
 # -------------------
-train_datagen = ImageDataGenerator(
+training_datagen = ImageDataGenerator(
         rescale=1./255,
         shear_range=0.2,
         zoom_range=0.4,
-        horizontal_flip=True)
+        horizontal_flip=True,
+        validation_split=0.2)
 
-training_generator = train_datagen.flow_from_directory(
-                'training',
+validation_datagen = ImageDataGenerator(rescale=1./255)
+
+# Pool classes to exclude U-bar/LoopLock differentiation for the first model
+class_pool_mapping = np.array([0, 0, 1, 1])
+training_datagen= pool_generator_classes(training_datagen, class_pool_mapping)
+validation_datagen = pool_generator_classes(validation_datagen, class_pool_mapping)
+
+training_generator = training_datagen.flow_from_directory(
+                path_to_archive,
                 target_size=(INPUT_H, INPUT_W),
                 batch_size=BATCH_SIZE,
-                class_mode='binary')
+                class_mode='binary',
+                subset='training')
 
-validation_generator = test_datagen.flow_from_directory(
-                'test',
+validation_generator = validation_datagen.flow_from_directory(
+                path_to_archive,
                 target_size=(INPUT_H, INPUT_W),
                 batch_size=BATCH_SIZE,
-                class_mode='binary')
+                class_mode='binary',
+                subset='validation')
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 
@@ -111,14 +125,16 @@ def freeze_layers(layer_iterable, view='len'):
 freeze_layers(base.layers)  # this will freeze all base model layers
 # ---------------------------------------------------------------------------------------------------------------------
 
-# --------------
-# COMPILE MODEL |
-# --------------
+# -----------------------------------
+# COMPILE MODEL AND SET UP CALLBACKS |
+# -----------------------------------
 # always compile model after layers have been frozen
 
 model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc', 'mae'])
 precision = Precision()
 recall = Recall()
+history = History()
+npt_monitor = NeptuneMonitor()
 # ---------------------------------------------------------------------------------------------------------------------
 
 
@@ -126,21 +142,37 @@ recall = Recall()
 # FIT |
 # ----
 
-model.fit_generator(train_generator,
+model.fit_generator(training_generator,
                     steps_per_epoch=(TRAIN_SIZE / BATCH_SIZE),  # number of samples in the dataset
                     epochs=EPOCHS,  # number of epochs, training cycles
                     validation_data=validation_generator,  # performance eval on test set
                     validation_steps=(TEST_SIZE / BATCH_SIZE),
-                    callbacks=[history, precision, recall])
+                    callbacks=[history, precision, recall, npt_monitor])
 # read on SO, that the right way to compute precision and recall is to do it at the end of each epoch
 # thus we use precision and recall functions as callbacks
 # ---------------------------------------------------------------------------------------------------------------------
 
+# ---------------------
+# RETRAINING THE MODEL |
+# ---------------------
+# todo - second training loop
+
+# --------------------------------------
+# EXPORT MODEL ARCHITECTURE AND WEIGHTS |
+# --------------------------------------
+# export model structure to json file:
+model_struct_json = model.to_json()
+filename = filepattern('model_ana_', '.json')
+with open(filename, 'w') as f:
+    f.write(model_struct_json)
+
+# export weights to an hdf5 file:
+w_filename = filepattern('weights_ana_', '.h5')
+model.save_weights(w_filename)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
 # ------------------------
-# SEND METRICS TO NEPTUNE |
+# STOP NEPTUNE EXPERIMENT |
 # ------------------------
-# npt.send_metric('acc', 0.95)
-# npt.send_metric('mae', 0.95)
-# npt.send_metric(precision, 0.95)
-# npt.send_metric(recall, 0.95)
 # npt.stop()
