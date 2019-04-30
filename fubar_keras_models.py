@@ -11,20 +11,20 @@ import PIL
 import os
 import numpy as np
 
-import neptune as npt
+# import neptune as npt
 
 from cnn_toolkit import Precision, Recall, filepattern, NeptuneMonitor, \
     pool_generator_classes, show_architecture, frosty
 
-npt_token=''
-npt_project = 'user/fubar'
+# npt_token=''
+# npt_project = 'user/fubar'
 
 # -----------------------------
 # OPTIONAL: INITIALIZE NEPTUNE |
 # -----------------------------
-npt.init(api_token=npt_token,
-         project_qualified_name=npt_project)
-npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses to prevent neptune from reading code
+# npt.init(api_token=npt_token,
+#          project_qualified_name=npt_project)
+# npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses to prevent neptune from reading code
 
 # -----------
 # BASE MODEL |
@@ -143,7 +143,7 @@ print(show_architecture(base))
 # ------------------------
 # STOP NEPTUNE EXPERIMENT |
 # ------------------------
-npt.stop()
+# npt.stop()
 
 # ======================================================================================================================
 # ======================================================================================================================
@@ -158,10 +158,10 @@ frosty(model.layers[249:], frost=False)
 # -----------------------------
 # OPTIONAL: INITIALIZE NEPTUNE |
 # -----------------------------
-npt.init(api_token=npt_token,
-         project_qualified_name=npt_project)
-npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses to prevent neptune from reading code
-npt_monitor = NeptuneMonitor(BATCH_SIZE)
+# npt.init(api_token=npt_token,
+#          project_qualified_name=npt_project)
+# npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses to prevent neptune from reading code
+# npt_monitor = NeptuneMonitor(BATCH_SIZE)
 
 
 # ------------------------------------
