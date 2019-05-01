@@ -16,15 +16,16 @@ import neptune as npt
 from cnn_toolkit import Precision, Recall, filepattern, NeptuneMonitor, \
     pool_generator_classes, show_architecture, frosty
 
-npt_token=''
-npt_project = 'user/fubar'
+from npt_token_file import project_path, api
+npt_token = api
+npt_project = project_path
 
 # -----------------------------
 # OPTIONAL: INITIALIZE NEPTUNE |
 # -----------------------------
-npt.init(api_token=npt_token,
-         project_qualified_name=npt_project)
-npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses to prevent neptune from reading code
+# npt.init(api_token=npt_token,
+#          project_qualified_name=npt_project)
+# npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses to prevent neptune from reading code
 
 # -----------
 # BASE MODEL |
@@ -113,10 +114,10 @@ frosty(base.layers)  # this will freeze all base model layers
 # always compile model AFTER layers have been frozen
 
 model.compile(optimizer='rmsprop', loss='sparse_categorical_crossentropy', metrics=['acc', 'mae'])
-precision = Precision()
-recall = Recall()
+# precision = Precision()
+# recall = Recall()
 history = History()
-npt_monitor = NeptuneMonitor(BATCH_SIZE)
+# npt_monitor = NeptuneMonitor(BATCH_SIZE)
 # ---------------------------------------------------------------------------------------------------------------------
 
 
@@ -128,7 +129,11 @@ model.fit_generator(training_generator,
                     epochs=EPOCHS,  # number of epochs, training cycles
                     validation_data=validation_generator,  # performance eval on test set
                     validation_steps=(TEST_SIZE / BATCH_SIZE),
-                    callbacks=[history, precision, recall, npt_monitor])
+                    callbacks=[history])
+                    # todo - check which specific callback causes problems
+                               #precision,
+                               #recall,
+                               #npt_monitor])
 # read on SO, that the right way to compute precision and recall is to do it at the end of each epoch
 # thus we use precision and recall functions as callbacks
 # ---------------------------------------------------------------------------------------------------------------------
@@ -143,7 +148,7 @@ print(show_architecture(base))
 # ------------------------
 # STOP NEPTUNE EXPERIMENT |
 # ------------------------
-npt.stop()
+# npt.stop()
 
 # ======================================================================================================================
 # ======================================================================================================================
@@ -158,23 +163,26 @@ frosty(model.layers[249:], frost=False)
 # -----------------------------
 # OPTIONAL: INITIALIZE NEPTUNE |
 # -----------------------------
-npt.init(api_token=npt_token,
-         project_qualified_name=npt_project)
-npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses to prevent neptune from reading code
-npt_monitor = NeptuneMonitor(BATCH_SIZE)
+# npt.init(api_token=npt_token,
+#          project_qualified_name=npt_project)
+# npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses to prevent neptune from reading code
+# npt_monitor = NeptuneMonitor(BATCH_SIZE)
 
 
 # ------------------------------------
 # COMPILE MODEL AGAIN AND TRAIN AGAIN |
 # ------------------------------------
 # always compile model AFTER layers have been frozen
-model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['loss', 'acc'])
+model.compile(optimizer='rmsprop', loss='sparse_categorical_crossentropy', metrics=['acc', 'mae'])
 model.fit_generator(training_generator,
                     steps_per_epoch=(TRAIN_SIZE / BATCH_SIZE),  # number of samples in the dataset
                     epochs=EPOCHS,  # number of epochs, training cycles
                     validation_data=validation_generator,  # performance eval on test set
                     validation_steps=(TEST_SIZE / BATCH_SIZE),
-                    callbacks=[history, precision, recall, npt_monitor])
+                    callbacks=[history])
+                               # precision,
+                               # recall,
+                               # npt_monitor])
 
 # --------------------------------------
 # EXPORT MODEL ARCHITECTURE AND WEIGHTS |

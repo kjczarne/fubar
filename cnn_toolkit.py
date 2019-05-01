@@ -62,8 +62,8 @@ class Precision(Callback):
         self.precisions = []
 
     def on_epoch_end(self, epoch, logs={}):
-        y_pred = (np.asarray(self.model.predict(self.model.validation_data[0]))).round()
-        y_true = self.model.validation_data[1]
+        y_pred = (np.asarray(self.model.predict(self.model.outputs))).round()
+        y_true = self.model.targets
         precision = precision_score(y_true, y_pred)
         self.precisions.append(precision)
         print("validation set precision at epoch {}: {}".format(epoch, precision))
@@ -82,8 +82,9 @@ class Recall(Callback):
         self.recalls = []
 
     def on_epoch_end(self, epoch, logs={}):
-        y_pred = (np.asarray(self.model.predict(self.model.validation_data[0]))).round()
-        y_true = self.model.validation_data[1]
+        # After model compilation, the placeholder tensor for y_true is in model.targets and y_pred is in model.outputs
+        y_pred = (np.asarray(self.model.predict(self.model.outputs))).round()
+        y_true = self.model.targets
         recall = recall_score(y_true, y_pred)
         self.recalls.append(recall)
         print("validation set recall at epoch {}: {}".format(epoch, recall))
