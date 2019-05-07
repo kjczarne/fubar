@@ -2,10 +2,12 @@ import keras.backend as K
 import glob
 from decimal import Decimal
 from keras.callbacks import Callback
-from sklearn.metrics import precision_score, recall_score
+from sklearn.metrics import precision_score, recall_score, f1_score
 import neptune as npt
 import numpy as np
-
+import pandas as pd
+import os
+from pathlib import Path
 
 def filepattern(pattern, extension, defaulttag='0.0', analysistype=""):
     """
@@ -62,33 +64,36 @@ class Precision(Callback):
         self.precisions = []
 
     def on_epoch_end(self, epoch, logs={}):
-        y_pred = (np.asarray(self.model.predict(self.model.outputs))).round()
-        y_true = self.model.targets
+        y_pred = (np.asarray(self.model.predict(self.validation_data[0]))).round()
+        y_true = self.validation_data[1]
         precision = precision_score(y_true, y_pred)
         self.precisions.append(precision)
         print("validation set precision at epoch {}: {}".format(epoch, precision))
-        return self.precisions
+        return
 
 
 class Recall(Callback):
     """
     Keras Callback. Calculates recall metrics at the end of each epoch.
     """
-    def __init__(self):
+    def __init__(self, X_test, y_test):
         super().__init__()
         self.recalls = []
+        self.X_test = X_test
+        self.y_test = y_test
 
     def on_train_begin(self, logs={}):
         self.recalls = []
 
     def on_epoch_end(self, epoch, logs={}):
         # After model compilation, the placeholder tensor for y_true is in model.targets and y_pred is in model.outputs
-        y_pred = (np.asarray(self.model.predict(self.model.outputs))).round()
-        y_true = self.model.targets
+        y_pred = self.model.predict(self.X_test)
+        y_pred = self.model.predict(self.model.validation_data[0])
+        y_true = self.y_test
         recall = recall_score(y_true, y_pred)
         self.recalls.append(recall)
         print("validation set recall at epoch {}: {}".format(epoch, recall))
-        return self.recalls
+        return
 
 
 class NeptuneMonitor(Callback):
@@ -110,11 +115,16 @@ class NeptuneMonitor(Callback):
         self.current_epoch += 1
 
 
+class DebuggingCallback(Callback):
+    def on_epoch_end(self, epoch, logs=None):
+        print(self.model.outputs)
+        print(self.model.targets)
+
 def dict_swap(dictionary):
     """
     swaps keys with values of a dictionary
     load a dict like {'key1': 0, 'key2': 0, 'key3': 1, 'key4': 1}
-    get a dict like {0: [key1, key2], 1: [key3, key4]
+    get a dict like {0: [key1, key2], 1: [key3, key4]}
     :param dictionary:
     :return:
     """
@@ -202,3 +212,42 @@ def frosty(layer_iterable, view='len', frost=True):
         return "Frozen layers: {}".format(idx_record)
     else:
         pass
+
+
+def file_train_test_split(path, fmt, split=0.2, random_state=None):
+    """
+    A function to perform train/test split within a given directory.
+    :param path: pathlib.Path object
+    :param fmt: format of the files passed, can be list of formats
+    :param split: float specifying proportion of test set split
+    :param random_state: np.random.seed setting
+    :return: two-tuple of pd.DataFrame objects (train, test)
+    """
+    np.random.seed(random_state)
+    cats = list(os.walk(path))[0][1]
+
+    def glob_up(cat):
+        if type(fmt) is list:
+            globs = []
+            for i in fmt:
+                globs += glob.glob(str(path / Path(cat) / Path(i)))
+            return np.array(globs)
+        else:
+            return glob.glob(str(path / Path(cat) / Path(fmt)))
+
+    globbed_filenames = {cat: np.array(glob_up(cat)) for cat in cats}  # {'locked': [x.jpg, y.jpg, z.jpg]...}
+    cat_lengths = {cat: len(globbed_filenames[cat]) for cat in cats}  # {'locked: 214...}
+    # # randomly select equal number of samples from each category
+    # # (we're providing a balanced test set even if training dataset is imbalanced)
+    test_dict = {}
+    train_dict = {}
+    for k, v in globbed_filenames.items():
+        rand_filenames = np.copy(v)
+        np.random.shuffle(rand_filenames)
+        split_bound = int(cat_lengths[k]*split)
+        test_dict[k] = rand_filenames[:split_bound]
+        train_dict[k] = rand_filenames[split_bound:int(cat_lengths[k])]
+    return pd.DataFrame.from_dict(train_dict, orient='index', dtype=np.str)\
+               .transpose().melt().dropna().rename({'variable': 'y_col', 'value': 'x_col'}, axis=1), \
+          pd.DataFrame.from_dict(test_dict, orient='index', dtype=np.str)\
+               .transpose().melt().dropna().rename({'variable': 'y_col', 'value': 'x_col'}, axis=1)

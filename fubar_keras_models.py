@@ -4,17 +4,21 @@ from keras.preprocessing import image
 from keras.models import Model
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import History
+# from keras_metrics import recall, precision
 
 from pathlib import Path
 
 import PIL
 import os
 import numpy as np
+import glob
+import pandas as pd
 
 import neptune as npt
 
 from cnn_toolkit import Precision, Recall, filepattern, NeptuneMonitor, \
-    pool_generator_classes, show_architecture, frosty
+    pool_generator_classes, show_architecture, frosty, DebuggingCallback, \
+    file_train_test_split
 
 from npt_token_file import project_path, api
 npt_token = api
@@ -56,26 +60,35 @@ path_to_archive = Path.home() / Path('Downloads/FubarArchive/')
 # -------------------
 # DATA PREPROCESSING |
 # -------------------
-image_datagen = ImageDataGenerator(
+# We need a random split of 80/20 for training and validation images. Make a DF mapping files from random categories
+# to a validation or training set and use it to construct training_generator and validation_generator
+
+paths = file_train_test_split(path_to_archive, ['*.jpg', '*.jpeg', '*.png'])
+
+test_image_datagen = ImageDataGenerator(
+        rescale=1./255)
+
+training_image_datagen = ImageDataGenerator(
         rescale=1./255,
         shear_range=0.2,
         zoom_range=0.4,
-        horizontal_flip=True,
-        validation_split=0.2)
+        horizontal_flip=True)
 
-training_generator = image_datagen.flow_from_directory(
-                path_to_archive,
+training_generator = training_image_datagen.flow_from_dataframe(
+                paths[0],
+                x_col='x_col',
+                y_col='y_col',
                 target_size=(INPUT_H, INPUT_W),
                 batch_size=BATCH_SIZE,
-                class_mode='sparse',
-                subset='training')
+                class_mode='sparse')
 
-validation_generator = image_datagen.flow_from_directory(
-                path_to_archive,
+validation_generator = test_image_datagen.flow_from_dataframe(
+                paths[1],
+                x_col='x_col',
+                y_col='y_col',
                 target_size=(INPUT_H, INPUT_W),
                 batch_size=BATCH_SIZE,
-                class_mode='sparse',
-                subset='validation')
+                class_mode='sparse')
 
 # Pool classes to exclude U-bar/LoopLock differentiation for the first model
 class_pool_mapping = {0: 0, 1: 0, 2: 1, 3: 1}
@@ -90,7 +103,7 @@ pool_generator_classes(validation_generator, class_pool_mapping)
 # MODEL ARCHITECTURE |
 # -------------------
 y = base.output
-y = GlobalAveragePooling2D()(y)
+y = GlobalAveragePooling2D()(y)  # __call__()
 y = Dense(1024, activation='relu', name='my_dense_1024')(y)
 y_pred = Dense(2, activation='sigmoid', name='output_dense')(y)
 # ---------------------------------------------------------------------------------------------------------------------
@@ -100,6 +113,9 @@ y_pred = Dense(2, activation='sigmoid', name='output_dense')(y)
 # CREATE MODEL FROM ARCHITECTURE |
 # -------------------------------
 model = Model(inputs=base.input, outputs=y_pred)
+# tf.Tensor objects are associated with tf.Graph object, which stores the architecture of the model,
+# that's why for functional Keras Model object all we need to do is specify the input and output tensor
+# and Model object figures the actual architecture from tf.Graph
 # ---------------------------------------------------------------------------------------------------------------------
 
 # --------------
@@ -115,9 +131,10 @@ frosty(base.layers)  # this will freeze all base model layers
 
 model.compile(optimizer='rmsprop', loss='sparse_categorical_crossentropy', metrics=['acc', 'mae'])
 # precision = Precision()
-# recall = Recall()
+recall = Recall()
 history = History()
-# npt_monitor = NeptuneMonitor(BATCH_SIZE)
+deb = DebuggingCallback()
+npt_monitor = NeptuneMonitor(BATCH_SIZE)
 # ---------------------------------------------------------------------------------------------------------------------
 
 
@@ -129,11 +146,11 @@ model.fit_generator(training_generator,
                     epochs=EPOCHS,  # number of epochs, training cycles
                     validation_data=validation_generator,  # performance eval on test set
                     validation_steps=(TEST_SIZE / BATCH_SIZE),
-                    callbacks=[history])
-                    # todo - check which specific callback causes problems
-                               #precision,
-                               #recall,
-                               #npt_monitor])
+                    callbacks=[history,
+                               # precision,
+                               recall])
+                               # deb])
+                               # npt_monitor])
 # read on SO, that the right way to compute precision and recall is to do it at the end of each epoch
 # thus we use precision and recall functions as callbacks
 # ---------------------------------------------------------------------------------------------------------------------
@@ -163,10 +180,10 @@ frosty(model.layers[249:], frost=False)
 # -----------------------------
 # OPTIONAL: INITIALIZE NEPTUNE |
 # -----------------------------
-# npt.init(api_token=npt_token,
-#          project_qualified_name=npt_project)
-# npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses to prevent neptune from reading code
-# npt_monitor = NeptuneMonitor(BATCH_SIZE)
+npt.init(api_token=npt_token,
+         project_qualified_name=npt_project)
+npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses to prevent neptune from reading code
+npt_monitor = NeptuneMonitor(BATCH_SIZE)
 
 
 # ------------------------------------
@@ -179,10 +196,10 @@ model.fit_generator(training_generator,
                     epochs=EPOCHS,  # number of epochs, training cycles
                     validation_data=validation_generator,  # performance eval on test set
                     validation_steps=(TEST_SIZE / BATCH_SIZE),
-                    callbacks=[history])
-                               # precision,
-                               # recall,
-                               # npt_monitor])
+                    callbacks=[history,
+                               precision,
+                               recall,
+                               npt_monitor])
 
 # --------------------------------------
 # EXPORT MODEL ARCHITECTURE AND WEIGHTS |
@@ -202,6 +219,6 @@ model.save_weights(w_filename)
 # ------------------------
 # STOP NEPTUNE EXPERIMENT |
 # ------------------------
-# npt.stop()
+npt.stop()
 # ======================================================================================================================
 # ======================================================================================================================
