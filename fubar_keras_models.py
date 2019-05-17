@@ -108,7 +108,7 @@ pool_generator_classes(validation_generator, class_pool_mapping)
 y = base.output
 y = GlobalAveragePooling2D()(y)  # __call__()
 y = Dense(1024, activation='relu', name='my_dense_1024')(y)
-y_pred = Dense(2, activation='sigmoid', name='output_dense')(y)
+y_pred = Dense(1, activation='sigmoid', name='output_dense')(y)
 # ---------------------------------------------------------------------------------------------------------------------
 
 
