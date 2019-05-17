@@ -2,12 +2,15 @@ import keras.backend as K
 import glob
 from decimal import Decimal
 from keras.callbacks import Callback
-from sklearn.metrics import precision_score, recall_score, f1_score
+# from sklearn.metrics import precision_score, recall_score, f1_score
 import neptune as npt
 import numpy as np
 import pandas as pd
 import os
 from pathlib import Path
+from tensorflow.python.ops.metrics import true_positives, false_positives, false_negatives, true_negatives
+import tensorflow as tf
+import re
 
 def filepattern(pattern, extension, defaulttag='0.0', analysistype=""):
     """
@@ -76,24 +79,26 @@ class Recall(Callback):
     """
     Keras Callback. Calculates recall metrics at the end of each epoch.
     """
-    def __init__(self, X_test, y_test):
+    def __init__(self):
         super().__init__()
         self.recalls = []
-        self.X_test = X_test
-        self.y_test = y_test
-
-    def on_train_begin(self, logs={}):
+        # self.X_test = X_test
+        # self.y_test = y_test
         self.recalls = []
+        self.tps = np.array([])
+        self.fns = np.array([])
+        self.pos = np.array([])
+
+    def on_batch_begin(self, batch, logs=None):
+        tp = np.array([i.eval() for i in true_positives(self.model.targets, self.model.outputs)])
+        fn = np.array([i.eval() for i in false_negatives(self.model.targets, self.model.outputs)])
+        pos = tp + fn
+        self.tps = np.append(self.tps, tp)
+        self.fns = np.append(self.fns, fn)
+        self.pos = np.append(self.pos, pos)
 
     def on_epoch_end(self, epoch, logs={}):
-        # After model compilation, the placeholder tensor for y_true is in model.targets and y_pred is in model.outputs
-        y_pred = self.model.predict(self.X_test)
-        y_pred = self.model.predict(self.model.validation_data[0])
-        y_true = self.y_test
-        recall = recall_score(y_true, y_pred)
-        self.recalls.append(recall)
-        print("validation set recall at epoch {}: {}".format(epoch, recall))
-        return
+        self.recalls = [self.tps, self.fns, self.pos]
 
 
 class NeptuneMonitor(Callback):
@@ -116,6 +121,9 @@ class NeptuneMonitor(Callback):
 
 
 class DebuggingCallback(Callback):
+    def __init__(self,):
+        self.model.predict
+
     def on_epoch_end(self, epoch, logs=None):
         print(self.model.outputs)
         print(self.model.targets)
@@ -251,3 +259,66 @@ def file_train_test_split(path, fmt, split=0.2, random_state=None):
                .transpose().melt().dropna().rename({'variable': 'y_col', 'value': 'x_col'}, axis=1), \
           pd.DataFrame.from_dict(test_dict, orient='index', dtype=np.str)\
                .transpose().melt().dropna().rename({'variable': 'y_col', 'value': 'x_col'}, axis=1)
+
+
+def _variable_on_cpu(name, shape, initializer):  # taken from CIFAR10 example on TF webpage
+    """Helper to create a Variable stored on CPU memory.
+
+    Args:
+    name: name of the variable
+    shape: list of ints
+    initializer: initializer for Variable
+
+    Returns:
+    Variable Tensor
+    """
+    with tf.device('/cpu:0'):  # this binds a variable to CPU
+        dtype = tf.float32  # and modifies its dtype
+        var = tf.get_variable(name, shape, initializer=initializer, dtype=dtype)  # this method gets an existing variable
+      # of a given name or creates a new one with that name
+    return var
+
+
+def _variable_with_weight_decay(name, shape, stddev, wd):  # taken from CIFAR10 example on TF webpage
+    """Helper to create an initialized Variable with weight decay.
+
+    Note that the Variable is initialized with a truncated normal distribution.
+    A weight decay is added only if one is specified.
+
+    Args:
+    name: name of the variable
+    shape: list of ints
+    stddev: standard deviation of a truncated Gaussian
+    wd: add L2Loss weight decay multiplied by this float. If None, weight
+        decay is not added for this Variable.
+
+    Returns:
+    Variable Tensor
+    """
+    dtype = tf.float32
+    var = _variable_on_cpu(
+      name,
+      shape,
+      tf.truncated_normal_initializer(stddev=stddev, dtype=dtype))
+    if wd is not None:
+        weight_decay = tf.multiply(tf.nn.l2_loss(var), wd, name='weight_loss')  # L2 regularization of weights
+        tf.add_to_collection('losses', weight_decay)
+    return var
+
+
+def _activation_summary(x):  # taken from CIFAR10 example on TF webpage
+    """Helper to create summaries for activations.
+
+    Creates a summary that provides a histogram of activations.
+    Creates a summary that measures the sparsity of activations.
+
+    Args:
+    x: Tensor
+    Returns:
+    nothing
+    """
+    # Remove 'tower_[0-9]/' from the name in case this is a multi-GPU training
+    # session. This helps the clarity of presentation on tensorboard.
+    tensor_name = re.sub('%s_[0-9]*/' % 'tower', '', x.op.name)
+    tf.summary.histogram(tensor_name + '/activations', x)
+    tf.summary.scalar(tensor_name + '/sparsity', tf.nn.zero_fraction(x))

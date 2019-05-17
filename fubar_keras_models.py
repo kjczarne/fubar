@@ -6,6 +6,9 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import History
 # from keras_metrics import recall, precision
 
+import matplotlib
+matplotlib.use('TkAgg')
+
 from pathlib import Path
 
 import PIL
@@ -130,10 +133,10 @@ frosty(base.layers)  # this will freeze all base model layers
 # always compile model AFTER layers have been frozen
 
 model.compile(optimizer='rmsprop', loss='sparse_categorical_crossentropy', metrics=['acc', 'mae'])
-# precision = Precision()
-recall = Recall()
+precision = Precision()
+recall = Recall()  # fixme - this is YIELDING TUPLES (images, labels) NOT RETURNING ONES!!
 history = History()
-deb = DebuggingCallback()
+# deb = DebuggingCallback()
 npt_monitor = NeptuneMonitor(BATCH_SIZE)
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -147,7 +150,7 @@ model.fit_generator(training_generator,
                     validation_data=validation_generator,  # performance eval on test set
                     validation_steps=(TEST_SIZE / BATCH_SIZE),
                     callbacks=[history,
-                               # precision,
+                               # precision])
                                recall])
                                # deb])
                                # npt_monitor])
