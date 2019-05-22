@@ -1,26 +1,20 @@
-from keras.applications.inception_v3 import InceptionV3
-from keras.layers import GlobalAveragePooling2D, Dense
-from keras.preprocessing import image
-from keras.models import Model
-from keras.preprocessing.image import ImageDataGenerator
-from keras.callbacks import History
-# from keras_metrics import recall, precision
+from tensorflow.python.keras.applications.inception_v3 import InceptionV3
+from tensorflow.python.keras.layers import GlobalAveragePooling2D, Dense
+from tensorflow.python.keras.preprocessing import image
+from tensorflow.python.keras.models import Model
+from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.python.keras.callbacks import History
 
 import matplotlib
 matplotlib.use('TkAgg')
 
 from pathlib import Path
 
-import PIL
-import os
-import numpy as np
-import glob
-import pandas as pd
-
 import neptune as npt
+import tensorflow as tf
 
-from cnn_toolkit import Precision, Recall, filepattern, NeptuneMonitor, \
-    pool_generator_classes, show_architecture, frosty, DebuggingCallback, \
+from cnn_toolkit import filepattern, NeptuneMonitor, \
+    pool_generator_classes, show_architecture, frosty, \
     file_train_test_split
 
 from npt_token_file import project_path, api
@@ -97,7 +91,8 @@ validation_generator = test_image_datagen.flow_from_dataframe(
 class_pool_mapping = {0: 0, 1: 0, 2: 1, 3: 1}
 pool_generator_classes(training_generator, class_pool_mapping)
 pool_generator_classes(validation_generator, class_pool_mapping)
-
+validation_generator.class_mode = 'binary'  # bring class mode back to binary
+training_generator.class_mode = 'binary'
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -132,11 +127,11 @@ frosty(base.layers)  # this will freeze all base model layers
 # -----------------------------------
 # always compile model AFTER layers have been frozen
 
-model.compile(optimizer='rmsprop', loss='sparse_categorical_crossentropy', metrics=['acc', 'mae'])
-precision = Precision()
-recall = Recall()  # fixme - this is YIELDING TUPLES (images, labels) NOT RETURNING ONES!!
+model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc',
+                                                                        tf.keras.metrics.Recall(),
+                                                                        tf.keras.metrics.Precision()])
+
 history = History()
-# deb = DebuggingCallback()
 npt_monitor = NeptuneMonitor(BATCH_SIZE)
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -144,31 +139,47 @@ npt_monitor = NeptuneMonitor(BATCH_SIZE)
 # ---------------------------------------------
 # TRAIN TOP LAYERS ON NEW DATA FOR A FEW EPOCHS|
 # ---------------------------------------------
-model.fit_generator(training_generator,
-                    steps_per_epoch=(TRAIN_SIZE / BATCH_SIZE),  # number of samples in the dataset
-                    epochs=EPOCHS,  # number of epochs, training cycles
-                    validation_data=validation_generator,  # performance eval on test set
-                    validation_steps=(TEST_SIZE / BATCH_SIZE),
-                    callbacks=[history,
-                               # precision])
-                               recall])
-                               # deb])
-                               # npt_monitor])
-# read on SO, that the right way to compute precision and recall is to do it at the end of each epoch
-# thus we use precision and recall functions as callbacks
+post_training_model = model.fit_generator(training_generator,
+                                          steps_per_epoch=((TRAIN_SIZE // BATCH_SIZE)+1),
+                                          epochs=EPOCHS,  # number of epochs, training cycles
+                                          validation_data=validation_generator,  # performance eval on test set
+                                          validation_steps=((TEST_SIZE // BATCH_SIZE)+1),
+                                          verbose=1,
+                                          callbacks=[history,
+                                                     npt_monitor])
+
+y_pred = model.predict_generator(validation_generator,
+                                 steps=(TEST_SIZE // BATCH_SIZE)+1,
+                                 callbacks=[],
+                                 verbose=1)
+# ---------------------------------------------------------------------------------------------------------------------
+
+# --------------------------------------
+# EXPORT MODEL ARCHITECTURE AND WEIGHTS |
+# --------------------------------------
+# export model structure to json file:
+model_struct_json = model.to_json()
+filename = filepattern('model_allfreeze', '.json')
+with open(filename, 'w') as f:
+    f.write(model_struct_json)
+
+# export weights to an hdf5 file:
+w_filename = filepattern('weights_allfreeze', '.h5')
+model.save_weights(w_filename)
 # ---------------------------------------------------------------------------------------------------------------------
 
 # -------------------------------------------------------------
 # VISUALIZE BASE ARCHITECTURE TO DECIDE WHICH LAYERS TO FREEZE |
 # -------------------------------------------------------------
-print(show_architecture(base))
+# PUT BREAKPOINT HERE!!!!!!!!!!!!!!!
+print(list(show_architecture(base)))
 # INSERT DEBUGGER BREAKPOINT DIRECTLY ON THE NEXT COMMAND TO VIEW THE ARCHITECTURE AT RUNTIME
 # ---------------------------------------------------------------------------------------------------------------------
 
 # ------------------------
 # STOP NEPTUNE EXPERIMENT |
 # ------------------------
-# npt.stop()
+npt.stop()
 
 # ======================================================================================================================
 # ======================================================================================================================
@@ -193,28 +204,33 @@ npt_monitor = NeptuneMonitor(BATCH_SIZE)
 # COMPILE MODEL AGAIN AND TRAIN AGAIN |
 # ------------------------------------
 # always compile model AFTER layers have been frozen
-model.compile(optimizer='rmsprop', loss='sparse_categorical_crossentropy', metrics=['acc', 'mae'])
-model.fit_generator(training_generator,
-                    steps_per_epoch=(TRAIN_SIZE / BATCH_SIZE),  # number of samples in the dataset
-                    epochs=EPOCHS,  # number of epochs, training cycles
-                    validation_data=validation_generator,  # performance eval on test set
-                    validation_steps=(TEST_SIZE / BATCH_SIZE),
-                    callbacks=[history,
-                               precision,
-                               recall,
-                               npt_monitor])
+model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc',
+                                                                        tf.keras.metrics.Recall(),
+                                                                        tf.keras.metrics.Precision()])
+post_training_model = model.fit_generator(training_generator,
+                                          steps_per_epoch=(TRAIN_SIZE / BATCH_SIZE),  # number of samples in the dataset
+                                          epochs=EPOCHS,  # number of epochs, training cycles
+                                          validation_data=validation_generator,  # performance eval on test set
+                                          validation_steps=(TEST_SIZE / BATCH_SIZE),
+                                          callbacks=[history,
+                                                     npt_monitor])
+
+y_pred = model.predict_generator(validation_generator,
+                                 steps=(TEST_SIZE // BATCH_SIZE)+1,
+                                 callbacks=[],
+                                 verbose=1)
 
 # --------------------------------------
 # EXPORT MODEL ARCHITECTURE AND WEIGHTS |
 # --------------------------------------
 # export model structure to json file:
 model_struct_json = model.to_json()
-filename = filepattern('model_ana_', '.json')
+filename = filepattern('model_partfreeze', '.json')
 with open(filename, 'w') as f:
     f.write(model_struct_json)
 
 # export weights to an hdf5 file:
-w_filename = filepattern('weights_ana_', '.h5')
+w_filename = filepattern('weights_partfreeze', '.h5')
 model.save_weights(w_filename)
 
 # ---------------------------------------------------------------------------------------------------------------------
