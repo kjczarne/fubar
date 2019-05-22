@@ -34,6 +34,14 @@ npt_project = project_path
 base = InceptionV3(weights='imagenet', include_top=False)
 # ---------------------------------------------------------------------------------------------------------------------
 
+# ---------------------
+# HERE LIVE THE IMAGES |
+# ---------------------
+
+path_to_archive = Path.home() / Path('Downloads/FubarArchive/')
+paths = file_train_test_split(path_to_archive, ['*.jpg', '*.jpeg', '*.png'])
+
+# ---------------------------------------------------------------------------------------------------------------------
 
 # ----------------
 # HYPERPARAMETERS |
@@ -41,17 +49,9 @@ base = InceptionV3(weights='imagenet', include_top=False)
 INPUT_H = 280
 INPUT_W = 280
 BATCH_SIZE = 32
-TRAIN_SIZE = ((124+91+24+25) * 8) // 10
-TEST_SIZE = ((124+91+24+25) * 2) // 10
+TRAIN_SIZE = paths[0].shape[0]
+TEST_SIZE = paths[1].shape[0]
 EPOCHS = 1
-# ---------------------------------------------------------------------------------------------------------------------
-
-# ---------------------
-# HERE LIVE THE IMAGES |
-# ---------------------
-
-path_to_archive = Path.home() / Path('Downloads/FubarArchive/')
-
 # ---------------------------------------------------------------------------------------------------------------------
 
 # -------------------
@@ -59,8 +59,6 @@ path_to_archive = Path.home() / Path('Downloads/FubarArchive/')
 # -------------------
 # We need a random split of 80/20 for training and validation images. Make a DF mapping files from random categories
 # to a validation or training set and use it to construct training_generator and validation_generator
-
-paths = file_train_test_split(path_to_archive, ['*.jpg', '*.jpeg', '*.png'])
 
 test_image_datagen = ImageDataGenerator(
         rescale=1./255)
@@ -88,7 +86,7 @@ validation_generator = test_image_datagen.flow_from_dataframe(
                 class_mode='sparse')
 
 # Pool classes to exclude U-bar/LoopLock differentiation for the first model
-class_pool_mapping = {0: 0, 1: 0, 2: 1, 3: 1}
+class_pool_mapping = {0: 0, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 1, 7: 1}
 pool_generator_classes(training_generator, class_pool_mapping)
 pool_generator_classes(validation_generator, class_pool_mapping)
 validation_generator.class_mode = 'binary'  # bring class mode back to binary
