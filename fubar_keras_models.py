@@ -124,10 +124,11 @@ frosty(base.layers)  # this will freeze all base model layers
 # COMPILE MODEL AND SET UP CALLBACKS |
 # -----------------------------------
 # always compile model AFTER layers have been frozen
-
+recall = tf.keras.metrics.Recall()
+precision = tf.keras.metrics.Precision()
 model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc',
-                                                                        tf.keras.metrics.Recall(),
-                                                                        tf.keras.metrics.Precision()])
+                                                                        recall,
+                                                                        precision])
 
 history = History()
 npt_monitor = NeptuneMonitor(BATCH_SIZE)
@@ -202,9 +203,11 @@ npt_monitor = NeptuneMonitor(BATCH_SIZE)
 # COMPILE MODEL AGAIN AND TRAIN AGAIN |
 # ------------------------------------
 # always compile model AFTER layers have been frozen
+recall = tf.keras.metrics.Recall()
+precision = tf.keras.metrics.Precision()
 model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc',
-                                                                        tf.keras.metrics.Recall(),
-                                                                        tf.keras.metrics.Precision()])
+                                                                        recall,
+                                                                        precision])
 post_training_model = model.fit_generator(training_generator,
                                           steps_per_epoch=(TRAIN_SIZE / BATCH_SIZE),  # number of samples in the dataset
                                           epochs=EPOCHS,  # number of epochs, training cycles
