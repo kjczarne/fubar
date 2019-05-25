@@ -16,6 +16,7 @@ import tensorflow as tf
 from cnn_toolkit import filepattern, NeptuneMonitor, \
     pool_generator_classes, show_architecture, frosty, \
     file_train_test_split
+from fubar_preprocessing import hprm, training_generator, validation_generator
 
 from npt_token_file import project_path, api
 npt_token = api
@@ -33,67 +34,6 @@ npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses 
 # -----------
 base = InceptionV3(weights='imagenet', include_top=False)
 # ---------------------------------------------------------------------------------------------------------------------
-
-# ---------------------
-# HERE LIVE THE IMAGES |
-# ---------------------
-
-path_to_archive = Path.home() / Path('Downloads/FubarArchive/')
-paths = file_train_test_split(path_to_archive, ['*.jpg', '*.jpeg', '*.png'])
-
-# ---------------------------------------------------------------------------------------------------------------------
-
-# ----------------
-# HYPERPARAMETERS |
-# ----------------
-INPUT_H = 280
-INPUT_W = 280
-BATCH_SIZE = 32
-TRAIN_SIZE = paths[0].shape[0]
-TEST_SIZE = paths[1].shape[0]
-EPOCHS = 1
-# ---------------------------------------------------------------------------------------------------------------------
-
-# -------------------
-# DATA PREPROCESSING |
-# -------------------
-# We need a random split of 80/20 for training and validation images. Make a DF mapping files from random categories
-# to a validation or training set and use it to construct training_generator and validation_generator
-
-test_image_datagen = ImageDataGenerator(
-        rescale=1./255)
-
-training_image_datagen = ImageDataGenerator(
-        rescale=1./255,
-        shear_range=0.2,
-        zoom_range=0.4,
-        horizontal_flip=True)
-
-training_generator = training_image_datagen.flow_from_dataframe(
-                paths[0],
-                x_col='x_col',
-                y_col='y_col',
-                target_size=(INPUT_H, INPUT_W),
-                batch_size=BATCH_SIZE,
-                class_mode='sparse')
-
-validation_generator = test_image_datagen.flow_from_dataframe(
-                paths[1],
-                x_col='x_col',
-                y_col='y_col',
-                target_size=(INPUT_H, INPUT_W),
-                batch_size=BATCH_SIZE,
-                class_mode='sparse')
-
-# Pool classes to exclude U-bar/LoopLock differentiation for the first model
-class_pool_mapping = {0: 0, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 1, 7: 1}
-pool_generator_classes(training_generator, class_pool_mapping)
-pool_generator_classes(validation_generator, class_pool_mapping)
-validation_generator.class_mode = 'binary'  # bring class mode back to binary
-training_generator.class_mode = 'binary'
-
-# ---------------------------------------------------------------------------------------------------------------------
-
 
 # -------------------
 # MODEL ARCHITECTURE |
@@ -131,7 +71,7 @@ model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc',
                                                                         precision])
 
 history = History()
-npt_monitor = NeptuneMonitor(BATCH_SIZE)
+npt_monitor = NeptuneMonitor(hprm['BATCH_SIZE'])
 # ---------------------------------------------------------------------------------------------------------------------
 
 
@@ -139,16 +79,16 @@ npt_monitor = NeptuneMonitor(BATCH_SIZE)
 # TRAIN TOP LAYERS ON NEW DATA FOR A FEW EPOCHS|
 # ---------------------------------------------
 post_training_model = model.fit_generator(training_generator,
-                                          steps_per_epoch=((TRAIN_SIZE // BATCH_SIZE)+1),
-                                          epochs=EPOCHS,  # number of epochs, training cycles
+                                          steps_per_epoch=((hprm['TRAIN_SIZE'] // hprm['BATCH_SIZE'])+1),
+                                          epochs=hprm['EPOCHS'],  # number of epochs, training cycles
                                           validation_data=validation_generator,  # performance eval on test set
-                                          validation_steps=((TEST_SIZE // BATCH_SIZE)+1),
+                                          validation_steps=((hprm['TEST_SIZE'] // hprm['BATCH_SIZE'])+1),
                                           verbose=1,
                                           callbacks=[history,
                                                      npt_monitor])
 
 y_pred = model.predict_generator(validation_generator,
-                                 steps=(TEST_SIZE // BATCH_SIZE)+1,
+                                 steps=(hprm['TEST_SIZE'] // hprm['BATCH_SIZE'])+1,
                                  callbacks=[],
                                  verbose=1)
 # ---------------------------------------------------------------------------------------------------------------------
@@ -183,62 +123,70 @@ npt.stop()
 # ======================================================================================================================
 # ======================================================================================================================
 
-# --------------
-# FREEZE LAYERS |
-# --------------
-# for now I just pass a slice of layers used in Keras documentation
-frosty(model.layers[:249], frost=True)
-frosty(model.layers[249:], frost=False)
-
-# -----------------------------
-# OPTIONAL: INITIALIZE NEPTUNE |
-# -----------------------------
-npt.init(api_token=npt_token,
-         project_qualified_name=npt_project)
-npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses to prevent neptune from reading code
-npt_monitor = NeptuneMonitor(BATCH_SIZE)
-
-
-# ------------------------------------
-# COMPILE MODEL AGAIN AND TRAIN AGAIN |
-# ------------------------------------
-# always compile model AFTER layers have been frozen
-recall = tf.keras.metrics.Recall()
-precision = tf.keras.metrics.Precision()
-model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc',
-                                                                        recall,
-                                                                        precision])
-post_training_model = model.fit_generator(training_generator,
-                                          steps_per_epoch=(TRAIN_SIZE / BATCH_SIZE),  # number of samples in the dataset
-                                          epochs=EPOCHS,  # number of epochs, training cycles
-                                          validation_data=validation_generator,  # performance eval on test set
-                                          validation_steps=(TEST_SIZE / BATCH_SIZE),
-                                          callbacks=[history,
-                                                     npt_monitor])
-
-y_pred = model.predict_generator(validation_generator,
-                                 steps=(TEST_SIZE // BATCH_SIZE)+1,
-                                 callbacks=[],
-                                 verbose=1)
-
-# --------------------------------------
-# EXPORT MODEL ARCHITECTURE AND WEIGHTS |
-# --------------------------------------
-# export model structure to json file:
-model_struct_json = model.to_json()
-filename = filepattern('model_partfreeze', '.json')
-with open(filename, 'w') as f:
-    f.write(model_struct_json)
-
-# export weights to an hdf5 file:
-w_filename = filepattern('weights_partfreeze', '.h5')
-model.save_weights(w_filename)
-
-# ---------------------------------------------------------------------------------------------------------------------
-
-# ------------------------
-# STOP NEPTUNE EXPERIMENT |
-# ------------------------
-npt.stop()
-# ======================================================================================================================
-# ======================================================================================================================
+# # --------------
+# # FREEZE LAYERS |
+# # --------------
+# # for now I just pass a slice of layers used in Keras documentation
+# frosty(model.layers[:249], frost=True)
+# frosty(model.layers[249:], frost=False)
+#
+# # -----------------------------
+# # OPTIONAL: INITIALIZE NEPTUNE |
+# # -----------------------------
+# npt.init(api_token=npt_token,
+#          project_qualified_name=npt_project)
+# npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses to prevent neptune from reading code
+# npt_monitor = NeptuneMonitor(BATCH_SIZE)
+#
+#
+# # ------------------------------------
+# # COMPILE MODEL AGAIN AND TRAIN AGAIN |
+# # ------------------------------------
+# # always compile model AFTER layers have been frozen
+# recall = tf.keras.metrics.Recall()
+# precision = tf.keras.metrics.Precision()
+# early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+#                                                   min_delta=0.001,
+#                                                   patience=0,
+#                                                   verbose=0,
+#                                                   mode='auto',
+#                                                   baseline=None,
+#                                                   restore_best_weights=True)
+# model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc',
+#                                                                         recall,
+#                                                                         precision])
+# post_training_model = model.fit_generator(training_generator,
+#                                           steps_per_epoch=(TRAIN_SIZE / BATCH_SIZE),  # number of samples in the dataset
+#                                           epochs=EPOCHS,  # number of epochs, training cycles
+#                                           validation_data=validation_generator,  # performance eval on test set
+#                                           validation_steps=(TEST_SIZE / BATCH_SIZE),
+#                                           callbacks=[history,
+#                                                      npt_monitor,
+#                                                      early_stopping])
+#
+# y_pred = model.predict_generator(validation_generator,
+#                                  steps=(TEST_SIZE // BATCH_SIZE)+1,
+#                                  callbacks=[],
+#                                  verbose=1)
+#
+# # --------------------------------------
+# # EXPORT MODEL ARCHITECTURE AND WEIGHTS |
+# # --------------------------------------
+# # export model structure to json file:
+# model_struct_json = model.to_json()
+# filename = filepattern('model_partfreeze', '.json')
+# with open(filename, 'w') as f:
+#     f.write(model_struct_json)
+#
+# # export weights to an hdf5 file:
+# w_filename = filepattern('weights_partfreeze', '.h5')
+# model.save_weights(w_filename)
+#
+# # ---------------------------------------------------------------------------------------------------------------------
+#
+# # ------------------------
+# # STOP NEPTUNE EXPERIMENT |
+# # ------------------------
+# npt.stop()
+# # ======================================================================================================================
+# # ======================================================================================================================
