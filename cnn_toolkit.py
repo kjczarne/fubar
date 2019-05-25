@@ -65,7 +65,7 @@ class NeptuneMonitor(Callback):
     def on_epoch_end(self, epoch, logs=None):
         npt.send_metric('epoch end accuracy', x=epoch, y=logs['acc'])
         npt.send_metric('epoch end loss', x=epoch, y=logs['loss'])
-        npt.send_metric('epoch end loss', x=epoch, y=logs['val_loss'])
+        npt.send_metric('epoch end validation loss', x=epoch, y=logs['val_loss'])
         npt.send_metric('training precision', x=epoch, y=logs['precision'])
         npt.send_metric('training recall', x=epoch, y=logs['recall'])
         npt.send_metric('validation precision', x=epoch, y=logs['val_precision'])
