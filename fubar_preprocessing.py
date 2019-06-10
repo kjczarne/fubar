@@ -21,7 +21,7 @@ from cnn_toolkit import filepattern, NeptuneMonitor, \
 # HERE LIVE THE IMAGES |
 # ---------------------
 
-path_to_archive = Path.home() / Path('Downloads/FubarArchive/')
+path_to_archive = Path.home() / Path('fubar/FubarArchive/')
 paths = file_train_test_split(path_to_archive, ['*.jpg', '*.jpeg', '*.png'])
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ hprm = dict(
     BATCH_SIZE=32,
     TRAIN_SIZE=paths[0].shape[0],
     TEST_SIZE=paths[1].shape[0],
-    EPOCHS=1,
+    EPOCHS=10,
     EARLY_STOPPING_DELTA=0.001
 )
 # ---------------------------------------------------------------------------------------------------------------------
@@ -72,7 +72,8 @@ validation_generator = test_image_datagen.flow_from_dataframe(
                 class_mode='sparse')
 
 # Pool classes to exclude U-bar/LoopLock differentiation for the first model
-class_pool_mapping = {0: 0, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 1, 7: 1}
+# class_pool_mapping = {0: 0, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 1, 7: 1}
+class_pool_mapping = {0: 0, 1:0, 2:1, 3:1}
 pool_generator_classes(training_generator, class_pool_mapping)
 pool_generator_classes(validation_generator, class_pool_mapping)
 validation_generator.class_mode = 'binary'  # bring class mode back to binary

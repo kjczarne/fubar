@@ -80,7 +80,7 @@ npt_monitor = NeptuneMonitor(hprm['BATCH_SIZE'])
 # ---------------------------------------------
 post_training_model = model.fit_generator(training_generator,
                                           steps_per_epoch=((hprm['TRAIN_SIZE'] // hprm['BATCH_SIZE'])+1),
-                                          epochs=hprm['EPOCHS'],  # number of epochs, training cycles
+                                          epochs=10,  # number of epochs, training cycles
                                           validation_data=validation_generator,  # performance eval on test set
                                           validation_steps=((hprm['TEST_SIZE'] // hprm['BATCH_SIZE'])+1),
                                           verbose=1,
