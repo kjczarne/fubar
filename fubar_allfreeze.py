@@ -8,14 +8,10 @@ from tensorflow.python.keras.callbacks import History
 import matplotlib
 matplotlib.use('TkAgg')
 
-from pathlib import Path
-
 import neptune as npt
 import tensorflow as tf
 
-from cnn_toolkit import filepattern, NeptuneMonitor, \
-    pool_generator_classes, show_architecture, frosty, \
-    file_train_test_split
+from cnn_toolkit import filepattern, NeptuneMonitor, show_architecture, frosty
 from fubar_preprocessing import hprm, training_generator, validation_generator
 
 from npt_token_file import project_path, api

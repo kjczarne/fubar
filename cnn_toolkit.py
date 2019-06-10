@@ -165,6 +165,23 @@ def frosty(layer_iterable, view='len', frost=True):
         pass
 
 
+def glob_up(path, cat, fmt):
+    """
+    function to glob different category folders
+    :param path: path to main directory
+    :param cat: category string
+    :param fmt: format of the files passed, can be list of formats
+    :return: list of paths
+    """
+    if type(fmt) is list:
+        globs = []
+        for i in fmt:
+            globs += glob.glob(str(path / Path(cat) / Path(i)))
+        return np.array(globs)
+    else:
+        return glob.glob(str(path / Path(cat) / Path(fmt)))
+
+
 def file_train_test_split(path, fmt, split=0.2, random_state=None):
     """
     A function to perform train/test split within a given directory.
@@ -176,22 +193,7 @@ def file_train_test_split(path, fmt, split=0.2, random_state=None):
     """
     np.random.seed(random_state)
     cats = list(os.walk(path))[0][1]
-
-    def glob_up(cat):
-        """
-        function to glob different category folders
-        :param cat: category string
-        :return:
-        """
-        if type(fmt) is list:
-            globs = []
-            for i in fmt:
-                globs += glob.glob(str(path / Path(cat) / Path(i)))
-            return np.array(globs)
-        else:
-            return glob.glob(str(path / Path(cat) / Path(fmt)))
-
-    globbed_filenames = {cat: np.array(glob_up(cat)) for cat in cats}  # {'locked': [x.jpg, y.jpg, z.jpg]...}
+    globbed_filenames = {cat: np.array(glob_up(path, cat, fmt)) for cat in cats}  # {'locked': [x.jpg, y.jpg, z.jpg]...}
     cat_lengths = {cat: len(globbed_filenames[cat]) for cat in cats}  # {'locked: 214...}
     # # randomly select equal number of samples from each category
     # # (we're providing a balanced test set even if training dataset is imbalanced)
