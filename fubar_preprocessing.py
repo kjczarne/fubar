@@ -14,8 +14,9 @@ from cnn_toolkit import filepattern, NeptuneMonitor, \
 # ---------------------
 
 file_formats = ['*.jpg', '*.jpeg', '*.png']
-path_to_archive = Path.home() / Path('fubar/FubarArchive/')
-paths = file_train_test_split(path_to_archive, file_formats)
+# path_to_archive = Path.home() / Path('fubar/FubarArchive/')
+path_to_archive = '/home/ubuntu/darknet/AlexeyAB/darknet/result_img/'
+paths = file_train_test_split(path_to_archive, file_formats, ignored_directories=['inference'])
 
 # ---------------------------------------------------------------------------------------------------------------------
 

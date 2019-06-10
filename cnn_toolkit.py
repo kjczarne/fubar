@@ -182,17 +182,24 @@ def glob_up(path, cat, fmt):
         return glob.glob(str(path / Path(cat) / Path(fmt)))
 
 
-def file_train_test_split(path, fmt, split=0.2, random_state=None):
+def file_train_test_split(path, fmt, split=0.2, random_state=None, ignored_directories=None):
     """
     A function to perform train/test split within a given directory.
     :param path: pathlib.Path object
     :param fmt: format of the files passed, can be list of formats
     :param split: float specifying proportion of test set split
     :param random_state: np.random.seed setting
+    :param ignored_directories: list of directories to ignore while reading the main dir
     :return: two-tuple of pd.DataFrame objects (train, test)
     """
     np.random.seed(random_state)
     cats = list(os.walk(path))[0][1]
+    try:
+        for idx, el in enumerate(cats):
+            if el in ignored_directories:
+                cats.remove(idx)
+    except ValueError:
+        pass
     globbed_filenames = {cat: np.array(glob_up(path, cat, fmt)) for cat in cats}  # {'locked': [x.jpg, y.jpg, z.jpg]...}
     cat_lengths = {cat: len(globbed_filenames[cat]) for cat in cats}  # {'locked: 214...}
     # # randomly select equal number of samples from each category
