@@ -6,6 +6,10 @@ import numpy as np
 import pandas as pd
 import os
 from pathlib import Path
+import tensorflow as tf
+import os
+from PIL import Image
+from io import BytesIO
 
 
 def filepattern(pattern, extension, defaulttag='0.0', analysistype=""):
@@ -216,3 +220,47 @@ def file_train_test_split(path, fmt, split=0.2, random_state=None, ignored_direc
                .transpose().melt().dropna().rename({'variable': 'y_col', 'value': 'x_col'}, axis=1), \
            pd.DataFrame.from_dict(test_dict, orient='index', dtype=np.str)\
                .transpose().melt().dropna().rename({'variable': 'y_col', 'value': 'x_col'}, axis=1)
+
+# -------------------------------
+# Code below is used for WIT tool |
+# -------------------------------
+
+def tf_example_generator(paths_dataframe, x_col='x_col', y_col='y_col'):
+    """
+    A helper function generating tf.Example instances from input data
+    :param paths_dataframe: pd.DataFrame as returned by custom file_train_test_split function
+    :param x_col: string specifying the column with pathname
+    :param y_col: string specifying the column with labels
+    :return: list of tf.Example objects
+    """
+    examples = []
+    unique_labels = set(paths_dataframe[y_col])
+    dict_mapping = dict()
+    for i in zip(list(unique_labels), range(len(unique_labels))):
+        dict_mapping[i[0]] = i[1]
+    labels = []
+    for i in paths_dataframe[y_col]:
+        labels.append(dict_mapping[i])
+    for i in paths_dataframe[x_col]:
+        example = tf.train.Example()
+        with open(i, 'rb') as f:
+            im = Image.open(f)
+            buffer = BytesIO()
+            im.save(buffer, format='JPEG')
+            image_bytes = buffer.getvalue()
+            example.features.feature['image/encoded'].bytes_list.value.append(image_bytes)
+        examples.append(example)
+    return examples, labels
+
+
+def load_byte_img(im_bytes, IMAGE_H, IMAGE_W):
+        buf = BytesIO(im_bytes)
+        im = np.array(Image.open(buf).resize((IMAGE_H, IMAGE_W)), dtype=np.float64) / 255.
+        return np.expand_dims(im, axis=0)
+
+
+def custom_predict(examples_to_infer, model):
+    ims = [load_byte_img(ex.features.feature['image/encoded'].bytes_list.value[0]) 
+         for ex in examples_to_infer]
+    preds = model.predict(np.array(ims))
+    return preds
