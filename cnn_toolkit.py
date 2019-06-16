@@ -221,6 +221,9 @@ def file_train_test_split(path, fmt, split=0.2, random_state=None, ignored_direc
            pd.DataFrame.from_dict(test_dict, orient='index', dtype=np.str)\
                .transpose().melt().dropna().rename({'variable': 'y_col', 'value': 'x_col'}, axis=1)
 
+# -------------------------------
+# Code below is used for WIT tool |
+# -------------------------------
 
 def tf_example_generator(paths_dataframe, x_col='x_col', y_col='y_col'):
     """
@@ -248,3 +251,16 @@ def tf_example_generator(paths_dataframe, x_col='x_col', y_col='y_col'):
             example.features.feature['image/encoded'].bytes_list.value.append(image_bytes)
         examples.append(example)
     return examples, labels
+
+
+def load_byte_img(im_bytes, IMAGE_H, IMAGE_W):
+        buf = BytesIO(im_bytes)
+        im = np.array(Image.open(buf).resize((IMAGE_H, IMAGE_W)), dtype=np.float64) / 255.
+        return np.expand_dims(im, axis=0)
+
+
+def custom_predict(examples_to_infer, model):
+    ims = [load_byte_img(ex.features.feature['image/encoded'].bytes_list.value[0]) 
+         for ex in examples_to_infer]
+    preds = model.predict(np.array(ims))
+    return preds
