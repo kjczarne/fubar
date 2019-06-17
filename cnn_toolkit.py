@@ -12,18 +12,18 @@ from PIL import Image
 from io import BytesIO
 
 
-def filepattern(pattern, extension, defaulttag='0.0', analysistype=""):
+def filepattern(pattern, extension, defaulttag='0.0', add_string=""):
     """
-    generates pattern names for efficient exporting of files, great for iterative saving of model parameters as HDF5
+    Generates pattern names for efficient exporting of files, great for iterative saving of model parameters as HDF5
     and architechtures as JSON when working with keras
 
-    example call: filepattern('hist_ana_', '.pkl', '5.0', 'convolution_stack) -> hist_ana_5.0convolution_stack.pkl
+    Example call: filepattern('hist_ana_', '.pkl', '5.0', 'convolution_stack) -> hist_ana_5.0convolution_stack.pkl
     above is true provided there is no version tag in the directory higher than 5.0
 
     :param pattern: defines starting pattern of a file
     :param extension: defines searched file extension
     :param defaulttag: defines default tag if no file that matches pattern is found
-    :param analysistype: additional tag for analysis file naming
+    :param add_string: additional string tag
     :return: returns a filename that follows the same pattern but has higher tag by 0.1
     """
     lst = []
@@ -49,10 +49,26 @@ def filepattern(pattern, extension, defaulttag='0.0', analysistype=""):
         defaulttag = Decimal(defaulttag) + Decimal('0.1')
 
     if len(lst) == 0:
-        filename = pattern + str(defaulttag) + analysistype + extension
+        filename = pattern + str(defaulttag) + add_string + extension
     else:
-        filename = pattern + newtag + analysistype + extension
+        filename = pattern + newtag + add_string + extension
     return filename
+
+
+def get_fresh_weights_and_model(directory, globstring_model, globstring_weights):
+    """
+    Scans the directory for model and weights files.
+    :param directory: string specifying the parent directory to search, use os.getcwd() here to point
+    to the current working directory
+    :param globstring_model: string specifying the model filename glob pattern
+    :param globstring_weights: string specifying the weights filename glob pattern
+    :return: 2-tuple where first element is the path to model architecture, second to weights
+    """
+    model_names = glob.glob(directory + '/' + globstring_model) 
+    model_names.sort(reverse=True)
+    weight_names = glob.glob(directory + '/' + globstring_weights)
+    weight_names.sort(reverse=True)
+    return model_names[0], weight_names[0]
 
 
 class NeptuneMonitor(Callback):
@@ -68,7 +84,7 @@ class NeptuneMonitor(Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         npt.send_metric('epoch end accuracy', x=epoch, y=logs['acc'])
-        npt.send_metric('epoch end accuracy', x=epoch, y=logs['val_acc'])
+        npt.send_metric('validation accuracy', x=epoch, y=logs['val_acc'])
         npt.send_metric('epoch end loss', x=epoch, y=logs['loss'])
         npt.send_metric('epoch end validation loss', x=epoch, y=logs['val_loss'])
         npt.send_metric('training precision', x=epoch, y=logs['precision'])
@@ -80,7 +96,7 @@ class NeptuneMonitor(Callback):
 
 def dict_swap(dictionary):
     """
-    swaps keys with values of a dictionary
+    Swaps keys with values of a dictionary
     load a dict like {'key1': 0, 'key2': 0, 'key3': 1, 'key4': 1}
     get a dict like {0: [key1, key2], 1: [key3, key4]}
     :param dictionary:
@@ -172,7 +188,7 @@ def frosty(layer_iterable, view='len', frost=True):
 
 def glob_up(path, cat, fmt):
     """
-    function to glob different category folders
+    Function to glob different category folders
     :param path: path to main directory
     :param cat: category string
     :param fmt: format of the files passed, can be list of formats
