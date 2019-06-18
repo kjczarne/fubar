@@ -8,10 +8,10 @@ import os
 import re
 from pathlib import Path
 import tensorflow as tf
-import os
 from PIL import Image
 import io
 from io import BytesIO
+import json
 
 
 def filepattern(pattern, extension, defaulttag='0.0', add_string=""):
@@ -366,3 +366,20 @@ def parse_image_dataset(raw_image_dataset):
     :return: 
     """
     return raw_image_dataset.map(_parse_image_function)
+
+
+def serialize_model(model_file, model_version='1', weights_file=None):
+    """
+    saves model as a protobuf compatible with TensorFlow Serving
+    :param model_file: path to JSON or HDF5 file with the model
+    :param model_version: string specifying model version name
+    :param weights_file: path to optional HDF5 file with weights
+    :return: None
+    """
+    if weights_file is None:
+        model = tf.keras.models.load_model(model_file)
+    else:
+        with open(model_file, 'r') as f:
+            model = tf.keras.models.model_from_json(f.read())
+        model.load_weights(weights_file)
+    tf.saved_model.save(model, os.getcwd() + '/' + model_version)
