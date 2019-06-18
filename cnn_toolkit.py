@@ -5,10 +5,12 @@ import neptune as npt
 import numpy as np
 import pandas as pd
 import os
+import re
 from pathlib import Path
 import tensorflow as tf
 import os
 from PIL import Image
+import io
 from io import BytesIO
 
 
@@ -281,3 +283,86 @@ def custom_predict(examples_to_infer, model):
          for ex in examples_to_infer]
     preds = model.predict(np.array(ims))
     return preds
+
+def image_bytestring(path_to_image):
+    with open(path_to_image, 'rb') as f:
+        return f.read()
+
+def image_example(image_string, label):
+    """
+    taken from TensorFlow TFRecords tutorial
+    :param image_string: image bytestring
+    :param label: image label (integer)
+    :return: tf.Example
+    """
+    image_shape = tf.image.decode_jpeg(image_string).shape
+    print(image_shape)
+    feature = {
+      'height': _int64_feature(image_shape[0]),
+      'width': _int64_feature(image_shape[1]),
+      'depth': _int64_feature(image_shape[2]),
+      'label': _int64_feature(label),
+      'image_raw': _bytes_feature(image_string),
+    }
+
+    return tf.train.Example(features=tf.train.Features(feature=feature))
+
+
+def labels_to_integers(label_list):
+    """
+    converts a list of string labels to integer list
+    :param label_list: list of labels (str)
+    :return: list
+    """
+    mapping = {v:k for k, v in enumerate(list(set(label_list)))}
+    return [mapping[i] for i in label_list]
+
+
+def write_tfrecord(test_dataframe, x_col='x_col', y_col='y_col', outfile='images.tfrecord', verbose=True):
+    """
+    writes TFRecord files
+    :param test_dataframe: two-column pd.DataFrame, where one column is image labels and the other paths to images
+    :param x_col: string naming the column with paths, default is 'x_col'
+    :param y_col: string naming the column with labels, default is 'y_col'
+    :return: None
+    """
+    labels = labels_to_integers(test_dataframe[y_col])
+    images = test_dataframe[x_col]
+    examples = []
+    for label, image in zip(labels, images):
+        im_bytes = image_bytestring(image)
+        im_example = image_example(im_bytes, label)
+        examples.append(im_example)
+        if verbose:
+            print(f'Generated {len(examples)} examples')
+    def write(outfile):
+        with tf.io.TFRecordWriter(outfile) as writer:
+            for example in examples:
+                writer.write(example.SerializeToString())
+    write(outfile)
+    
+
+def _parse_image_function(example_proto):
+    """
+    taken from TensorFlow TFRecords tutorial
+    :param example_proto: tf.Example
+    :return: parsed binary data, human readable
+    """
+    image_feature_description = {
+        'height': tf.io.FixedLenFeature([], tf.int64),
+        'width': tf.io.FixedLenFeature([], tf.int64),
+        'depth': tf.io.FixedLenFeature([], tf.int64),
+        'label': tf.io.FixedLenFeature([], tf.int64),
+        'image_raw': tf.io.FixedLenFeature([], tf.string),
+    }
+    # Parse the input tf.Example proto using the dictionary above.
+    return tf.io.parse_single_example(example_proto, image_feature_description)
+
+
+def parse_image_dataset(raw_image_dataset):
+    """
+    transforms raw binary data in a tf.Dataset to human readable form
+    :param raw_image_dataset: tf.Dataset with raw binary data
+    :return: 
+    """
+    return raw_image_dataset.map(_parse_image_function)
