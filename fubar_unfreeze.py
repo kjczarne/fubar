@@ -13,10 +13,11 @@ from pathlib import Path
 import neptune as npt
 import tensorflow as tf
 import json
+import os
 
 from cnn_toolkit import filepattern, NeptuneMonitor, \
     pool_generator_classes, show_architecture, frosty, \
-    file_train_test_split
+    file_train_test_split, get_fresh_weights_and_model
 from fubar_preprocessing import hprm, training_generator, validation_generator
 
 from npt_token_file import project_path, api
@@ -40,9 +41,10 @@ print(hprm)
 # ----------------
 # RE-CREATE MODEL |
 # ----------------
-with open(input('Enter filename with model architecture: '), 'r') as f:
+m, w = get_fresh_weights_and_model(os.getcwd(), 'model_allfreeze*', 'weights_allfreeze*')
+with open(m, 'r') as f:
     model = tf.keras.models.model_from_json(f.read())
-model.load_weights(input('Enter filename with model weights: '))
+model.load_weights(w)
 # ---------------------------------------------------------------------------------------------------------------------
 
 history = History()
