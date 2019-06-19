@@ -32,7 +32,6 @@ npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses 
 x = tf.keras.layers.Input(shape=(hprm['INPUT_H'], hprm['INPUT_W'], 3),
                           batch_size=hprm['BATCH_SIZE'])
 x = tf.keras.layers.Dropout(rate=0.2, noise_shape=(hprm['BATCH_SIZE'], 1, hprm['INPUT_W'], 3))(x)
-print(x)
 base = tf.keras.applications.InceptionV3(input_tensor=x, weights='imagenet', include_top=False)
 y = base.output
 y = tf.keras.layers.GlobalAveragePooling2D()(y)  # __call__()
