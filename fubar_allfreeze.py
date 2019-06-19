@@ -11,7 +11,7 @@ matplotlib.use('TkAgg')
 import neptune as npt
 import tensorflow as tf
 
-from cnn_toolkit import filepattern, NeptuneMonitor, show_architecture, frosty
+from cnn_toolkit import filepattern, NeptuneMonitor, show_architecture, frosty, make_pred_output_callback
 from fubar_preprocessing import hprm, training_generator, validation_generator
 
 from npt_token_file import project_path, api
@@ -62,6 +62,10 @@ frosty(base.layers)  # this will freeze all base model layers
 # always compile model AFTER layers have been frozen
 recall = tf.keras.metrics.Recall()
 precision = tf.keras.metrics.Precision()
+validation_output_callback = tf.keras.callbacks.LambdaCallback(on_epoch_end=make_pred_output_callback(
+    model,
+    validation_generator,
+    hprm['BATCH_SIZE']))
 model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc',
                                                                         recall,
                                                                         precision])
@@ -81,7 +85,8 @@ post_training_model = model.fit_generator(training_generator,
                                           validation_steps=((hprm['TEST_SIZE'] // hprm['BATCH_SIZE'])+1),
                                           verbose=1,
                                           callbacks=[history,
-                                                     npt_monitor])
+                                                     npt_monitor,
+                                                     validation_output_callback])
 
 y_pred = model.predict_generator(validation_generator,
                                  steps=(hprm['TEST_SIZE'] // hprm['BATCH_SIZE'])+1,

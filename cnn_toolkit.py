@@ -240,6 +240,26 @@ def file_train_test_split(path, fmt, split=0.2, random_state=None, ignored_direc
            pd.DataFrame.from_dict(test_dict, orient='index', dtype=np.str)\
                .transpose().melt().dropna().rename({'variable': 'y_col', 'value': 'x_col'}, axis=1)
 
+
+# Taken from https://epcsirmaz.blogspot.com/2017/06/display-sample-predictions-during.html
+# Function to display the target and prediciton
+def make_pred_output_callback(model, data_iterator, batch_size):
+    def testmodel(epoch, logs):
+        predx, predy = next(data_iterator)
+
+        predout = model.predict(
+            predx,
+            batch_size=batch_size
+        )
+
+        print("Target\n")
+        print(predy)
+        print("Prediction\n")
+        print(predout)
+    return testmodel
+
+# -----------------------------------------------------------------------------------------
+
 # -------------------------------
 # Code below is used for WIT tool |
 # -------------------------------

@@ -17,7 +17,8 @@ import os
 
 from cnn_toolkit import filepattern, NeptuneMonitor, \
     pool_generator_classes, show_architecture, frosty, \
-    file_train_test_split, get_fresh_weights_and_model
+    file_train_test_split, get_fresh_weights_and_model, \
+    make_pred_output_callback
 from fubar_preprocessing import hprm, training_generator, validation_generator
 
 from npt_token_file import project_path, api
@@ -80,6 +81,11 @@ early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                   mode='auto',
                                                   baseline=None,
                                                   restore_best_weights=True)
+validation_output_callback = tf.keras.callbacks.LambdaCallback(on_epoch_end=make_pred_output_callback(
+    model,
+    validation_generator,
+    hprm['BATCH_SIZE']))
+
 model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc',
                                                                         recall,
                                                                         precision])
@@ -89,7 +95,8 @@ post_training_model = model.fit_generator(training_generator,
                                           validation_data=validation_generator,  # performance eval on test set
                                           validation_steps=(hprm['TEST_SIZE'] / hprm['BATCH_SIZE']),
                                           callbacks=[history,
-                                                     npt_monitor])
+                                                     npt_monitor,
+                                                     validation_output_callback])
                                                     # early_stopping])
 
 y_pred = model.predict_generator(validation_generator,
