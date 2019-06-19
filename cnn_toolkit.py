@@ -244,6 +244,25 @@ def file_train_test_split(path, fmt, split=0.2, random_state=None, ignored_direc
 # Code below is used for WIT tool |
 # -------------------------------
 
+# Taken from TensorFlow TFRecord tutorial ----------------------------------------------
+def _bytes_feature(value):
+    """Returns a bytes_list from a string / byte."""
+    if isinstance(value, type(tf.constant(0))):
+        value = value.numpy() # BytesList won't unpack a string from an EagerTensor.
+    return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
+
+
+def _float_feature(value):
+    """Returns a float_list from a float / double."""
+    return tf.train.Feature(float_list=tf.train.FloatList(value=[value]))
+
+
+def _int64_feature(value):
+    """Returns an int64_list from a bool / enum / int / uint."""
+    return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+# ----------------------------------------------------------------------------------------
+
+
 def tf_example_generator(paths_dataframe, x_col='x_col', y_col='y_col'):
     """
     A helper function generating tf.Example instances from input data
@@ -284,11 +303,13 @@ def custom_predict(examples_to_infer, model):
     preds = model.predict(np.array(ims))
     return preds
 
+
 def image_bytestring(path_to_image):
     with open(path_to_image, 'rb') as f:
         return f.read()
 
-def image_example(image_string, label):
+
+def image_example(image_string, label, extra_features=None):
     """
     taken from TensorFlow TFRecords tutorial
     :param image_string: image bytestring
@@ -296,15 +317,18 @@ def image_example(image_string, label):
     :return: tf.Example
     """
     image_shape = tf.image.decode_jpeg(image_string).shape
-    print(image_shape)
     feature = {
-      'height': _int64_feature(image_shape[0]),
-      'width': _int64_feature(image_shape[1]),
-      'depth': _int64_feature(image_shape[2]),
-      'label': _int64_feature(label),
-      'image_raw': _bytes_feature(image_string),
+        'height': _int64_feature(image_shape[0]),
+        'width': _int64_feature(image_shape[1]),
+        'depth': _int64_feature(image_shape[2]),
+        'label': _int64_feature(label),
+        'image_raw': _bytes_feature(image_string),
     }
-
+    if extra_features is None:
+        pass
+    else:
+        for k, v in extra_features.items():
+            feature[k] = v
     return tf.train.Example(features=tf.train.Features(feature=feature))
 
 
@@ -318,52 +342,91 @@ def labels_to_integers(label_list):
     return [mapping[i] for i in label_list]
 
 
-def write_tfrecord(test_dataframe, x_col='x_col', y_col='y_col', outfile='images.tfrecord', verbose=True):
+def write_tfrecord(df, 
+                   image_path_series='x_col', 
+                   label_series_name='y_col', 
+                   cols_to_ignore=[],  
+                   outfile='images.tfrecord',
+                   verbose=True):
     """
     writes TFRecord files
-    :param test_dataframe: two-column pd.DataFrame, where one column is image labels and the other paths to images
-    :param x_col: string naming the column with paths, default is 'x_col'
-    :param y_col: string naming the column with labels, default is 'y_col'
+    :param df: pd.DataFrame with at least 2 columns containing paths to images and labels
+    :param image_path_series: string naming the column with paths, default is 'x_col'
+    :param label_series_name: string naming the column with labels, default is 'y_col'
+    :param cols_to_ignore: list of columns from the DataFrame to not treat as features and ignore them
+    :param outfile: path to output TFRecord file
+    :param verbose: verbose mode, True by default
     :return: None
     """
-    labels = labels_to_integers(test_dataframe[y_col])
-    images = test_dataframe[x_col]
+    # truncate df, put label separately, remove non-feature columns
+    cols = list(df.columns)
+    
+    for i in cols_to_ignore:
+        cols.remove(i)
+    
+    sub_df = df.loc[:, cols]
     examples = []
-    for label, image in zip(labels, images):
-        im_bytes = image_bytestring(image)
-        im_example = image_example(im_bytes, label)
+    sub_df[label_series_name] = labels_to_integers(df[label_series_name])
+    for i in sub_df.iterrows():
+        series = i[1]  # underlying pd.Series
+        im_bytes = image_bytestring(series[image_path_series])
+        label = series[label_series_name]
+        extra_feature_names = list(series.keys())
+        extra_feature_names.remove(label_series_name)
+        extra_feature_names.remove(image_path_series)
+        series = series.loc[extra_feature_names]
+        # ignore image path and label for extra features
+        extra_features = dict()
+        for k, ft in series.items():
+            if type(ft) == int:
+                val = _int64_feature(ft)
+            elif type(ft) == object:
+                val = _bytes_feature(ft)
+            elif type(ft) == float:
+                val = _float_feature(ft)
+            else:
+                raise ValueError('Unsupported data type!')
+            extra_features[k] = val
+        im_example = image_example(im_bytes, label, extra_features)
         examples.append(im_example)
         if verbose:
             print(f'Generated {len(examples)} examples')
+    
     def write(outfile):
         with tf.io.TFRecordWriter(outfile) as writer:
             for example in examples:
                 writer.write(example.SerializeToString())
-    write(outfile)
     
+    write(outfile)
 
-def _parse_image_function(example_proto):
+
+def _parse_image_function(example_proto, additional_features=None):
     """
     taken from TensorFlow TFRecords tutorial
     :param example_proto: tf.Example
     :return: parsed binary data, human readable
     """
-    image_feature_description = {
-        'height': tf.io.FixedLenFeature([], tf.int64),
-        'width': tf.io.FixedLenFeature([], tf.int64),
-        'depth': tf.io.FixedLenFeature([], tf.int64),
-        'label': tf.io.FixedLenFeature([], tf.int64),
-        'image_raw': tf.io.FixedLenFeature([], tf.string),
+    image_feature_desc = {
+            'height': tf.io.FixedLenFeature([], tf.int64),
+            'width': tf.io.FixedLenFeature([], tf.int64),
+            'depth': tf.io.FixedLenFeature([], tf.int64),
+            'label': tf.io.FixedLenFeature([], tf.int64),
+            'image_raw': tf.io.FixedLenFeature([], tf.string),
     }
+    if additional_features is None:
+        pass
+    else:
+        for k, v in additional_features.items():
+            image_feature_desc[k] = v
     # Parse the input tf.Example proto using the dictionary above.
-    return tf.io.parse_single_example(example_proto, image_feature_description)
+    return tf.io.parse_single_example(example_proto, image_feature_desc)
 
 
 def parse_image_dataset(raw_image_dataset):
     """
     transforms raw binary data in a tf.Dataset to human readable form
     :param raw_image_dataset: tf.Dataset with raw binary data
-    :return: 
+    :return: human readable tf.Dataset instance
     """
     return raw_image_dataset.map(_parse_image_function)
 
