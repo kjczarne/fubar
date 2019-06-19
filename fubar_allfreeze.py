@@ -25,15 +25,14 @@ npt.init(api_token=npt_token,
          project_qualified_name=npt_project)
 npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses to prevent neptune from reading code
 
-# -----------
-# BASE MODEL |
-# -----------
-base = InceptionV3(weights='imagenet', include_top=False)
-# ---------------------------------------------------------------------------------------------------------------------
 
 # -------------------
 # MODEL ARCHITECTURE |
 # -------------------
+x = tf.keras.layers.Input(shape=(hprm['INPUT_H', 'INPUT_W']),
+                          batch_size=hprm['BATCH_SIZE'])
+x = tf.keras.layers.Dropout(rate=0.2, noise_shape=(hprm['BATCH_SIZE'], 1, hprm['INPUT_W']))(x)
+base = InceptionV3(input_tensor=x, weights='imagenet', include_top=False)
 y = base.output
 y = GlobalAveragePooling2D()(y)  # __call__()
 y = Dense(1024, activation='relu', name='my_dense_1024')(y)
