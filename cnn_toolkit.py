@@ -466,3 +466,52 @@ def serialize_model(model_file, model_version='1', weights_file=None):
             model = tf.keras.models.model_from_json(f.read())
         model.load_weights(weights_file)
     tf.saved_model.save(model, os.getcwd() + '/' + model_version)
+# -----------------------------------------------------------------------------------------------------------------------
+
+# --------------------------------------
+# HELPER FUNCTIONS FOR MODEL EVALUATION |   
+# --------------------------------------
+
+def true_vs_predicted(model, positive_class, negative_class, base_path, accepted_file_formats):
+    """
+    Function for getting bulk predictions of binary classes.
+    :param model: Model or Sequential instance implementing predict method
+    :param positive_class: string, folder name of class defined as 1
+    :param negative_class: string, folder name of class defined as 0
+    :param base_path: string, base path to the folder containing category subfolders
+    :param accepted_file_formats: list, glob-like file formats e.g. ['*.jpg']
+    :return: 4-tuple of np.arrays containing pred values of class 1, true values of class 1, same respectively for class 0
+    """
+    preds=np.empty((1,0))
+    glob_list = []
+    
+    positive_preds = []
+    negative_preds = []
+    
+    for i in accepted_file_formats:
+        glob_list += glob.glob(base_path+'/'+positive_class+'/'+i)
+    for i in glob_list:
+        im = Image.open(i)
+        preds = np.append(preds, model.predict((np.expand_dims(np.array(im.resize((299,299))), axis=0))/255), axis=1)
+    positive_preds = preds.squeeze()
+    positive_ground_truth = np.array([1 for i in preds.squeeze()])
+    
+    preds=np.empty((1,0))
+    glob_list = []
+    for i in accepted_file_formats:
+        glob_list += glob.glob(base_path+'/'+negative_class+'/'+i)
+    for i in glob_list:
+        im = Image.open(i)
+        preds = np.append(preds, model.predict((np.expand_dims(np.array(im.resize((299,299))), axis=0))/255), axis=1)
+    negative_preds = preds.squeeze()
+    negative_ground_truth = np.array([0 for i in preds.squeeze()])
+    return positive_preds, positive_ground_truth, negative_preds, negative_ground_truth
+
+
+def contiguous_true_vs_predicted(model, positive_class, negative_class, base_path, accepted_file_formats):
+    """
+    Simple wrapper for true_vs_predicted to get contiguous np arrays of true vs. predicted labels.
+    :return: 2-tuple of np.arrays: contigous true values, contiguous predicted values
+    """
+    ppr, pgr, npr, ngr = true_vs_predicted(model, positive_class, negative_class, base_path, accepted_file_formats)
+    return np.concatenate((pgr, ngr)), np.concatenate((ppr, npr))
