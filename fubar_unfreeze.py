@@ -95,8 +95,8 @@ post_training_model = model.fit_generator(training_generator,
                                           validation_data=validation_generator,  # performance eval on test set
                                           validation_steps=(hprm['TEST_SIZE'] / hprm['BATCH_SIZE']),
                                           callbacks=[history,
-                                                     npt_monitor,
-                                                     validation_output_callback])
+                                                     npt_monitor])
+                                                     # validation_output_callback])
                                                     # early_stopping])
 
 y_pred = model.predict_generator(validation_generator,
