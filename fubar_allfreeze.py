@@ -84,8 +84,8 @@ post_training_model = model.fit_generator(training_generator,
                                           validation_steps=((hprm['TEST_SIZE'] // hprm['BATCH_SIZE'])+1),
                                           verbose=1,
                                           callbacks=[history,
-                                                     npt_monitor,
-                                                     validation_output_callback])
+                                                     npt_monitor])
+                                                     # validation_output_callback])
 
 y_pred = model.predict_generator(validation_generator,
                                  steps=(hprm['TEST_SIZE'] // hprm['BATCH_SIZE'])+1,
