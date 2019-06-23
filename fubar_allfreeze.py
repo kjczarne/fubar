@@ -31,11 +31,11 @@ npt.create_experiment(upload_source_files=[])  # keep what's inside parentheses 
 # -------------------
 x = tf.keras.layers.Input(shape=(hprm['INPUT_H'], hprm['INPUT_W'], 3))
                           # batch_size=hprm['BATCH_SIZE'])
-# x = tf.keras.layers.Dropout(rate=0.2)(x)
 base = tf.keras.applications.InceptionV3(input_tensor=x, weights='imagenet', include_top=False)
 y = base.output
 y = tf.keras.layers.GlobalAveragePooling2D()(y)  # __call__()
 y = tf.keras.layers.Dense(1024, activation='relu', name='my_dense_1024')(y)
+y = tf.keras.layers.Dropout(rate=0.2)(y)
 y_pred = tf.keras.layers.Dense(1, activation='sigmoid', name='output_dense')(y)
 # ---------------------------------------------------------------------------------------------------------------------
 
