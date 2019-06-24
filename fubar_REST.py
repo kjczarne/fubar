@@ -10,6 +10,7 @@ port = '8501'
 batch_size = 1
 image_path = 'img0.jpg'
 model_name = 'fubar'
+model_version = '4'
 signature_name = 'serving_default'
 
 image = load_byte_img(image_bytestring(image_path), hprm['INPUT_H'], hprm['INPUT_W'])
@@ -19,5 +20,5 @@ request = {
     "signature_name": signature_name,
     "instances": batch
 }
-response = requests.post(f"http://{host}:{port}/v1/models/{model_name}:predict", json=request)
+response = requests.post(f"http://{host}:{port}/models/{model_name}/{model_version}:predict", json=request)
 print(response)
