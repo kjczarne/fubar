@@ -18,8 +18,8 @@ import os
 from cnn_toolkit import filepattern, NeptuneMonitor, \
     pool_generator_classes, show_architecture, frosty, \
     file_train_test_split, get_fresh_weights_and_model, \
-    make_pred_output_callback
-from fubar_preprocessing import hprm, training_generator, validation_generator
+    make_pred_output_callback, contiguous_true_vs_predicted
+from fubar_preprocessing import hprm, training_generator, validation_generator, paths
 
 from npt_token_file import project_path, api
 npt_token = api
@@ -98,11 +98,6 @@ post_training_model = model.fit_generator(training_generator,
                                                      npt_monitor])
                                                      # validation_output_callback])
                                                     # early_stopping])
-
-y_pred = model.predict_generator(validation_generator,
-                                 steps=(hprm['TEST_SIZE'] // hprm['BATCH_SIZE'])+1,
-                                 callbacks=[],
-                                 verbose=1)
 
 # --------------------------------------
 # EXPORT MODEL ARCHITECTURE AND WEIGHTS |
