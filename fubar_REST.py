@@ -22,4 +22,5 @@ request = {
 }
 # response = requests.post(f"http://{host}:{port}/v1/models/{model_name}/{model_version}:predict", json=request)
 response = requests.post(f"http://localhost:8501/v1/models/fubar/4:predict", json=request)
-print(response)
+result = response.json()
+print(result)
