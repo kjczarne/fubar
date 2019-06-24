@@ -20,5 +20,6 @@ request = {
     "signature_name": signature_name,
     "instances": batch
 }
-response = requests.post(f"http://{host}:{port}/models/{model_name}/{model_version}:predict", json=request)
+# response = requests.post(f"http://{host}:{port}/v1/models/{model_name}/{model_version}:predict", json=request)
+response = requests.post(f"http://localhost:8501/v1/models/fubar/4:predict", json=request)
 print(response)
