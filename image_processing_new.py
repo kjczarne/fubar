@@ -25,7 +25,7 @@ def fubar_master_function(image_path, outfile_draw=None, outfile_crop=None):
                     path_conf['yolo_weights'],
                     image_path], stdout=subprocess.PIPE)
     stdo_blob = result.stdout.decode('utf-8')
-
+    print(stdo_blob)
     im = cv2.imread(image_path)
     H, W, _ = im.shape  # read dimensions of the image
     detected_categories = "|".join(label_dict.keys())
