@@ -82,7 +82,12 @@ def get_cropped_image(image_path, outfile_draw=None, outfile_crop=None):
                 Image.fromarray(crop_img[:,:,::-1]).save(outfile_crop)
             predictions.append(tf_serving_predict(
                 crop_img[:,:,::-1],
-
+                host=tf_s_conf['host'],
+                port=tf_s_conf['port'],
+                model_name=tf_s_conf['model_name'],
+                model_version=tf_s_conf['model_version'],
+                batch_size=tf_s_conf['batch_size'],
+                signature_name=tf_s_conf['signature_name']
             ))
 
     all_labels = [i['label'] for i in data.values()]
