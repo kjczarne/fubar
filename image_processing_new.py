@@ -21,7 +21,7 @@ labels_of_images_to_be_cropped = 'lock'
 def get_lock_image(i):
     #bscript = '#!/bin/bash\n./darknet detect /home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/cfg/yolo-obj.cfg' + ' ' + \
     #'/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/backup/yolo-obj_final.weights' + ' ' + '"' + i + '"'
-    result = subprocess.run(['./darknet',
+    result = subprocess.run(['/home/ubuntu/darknet/AlexeyAB/darknet/darknet',
                     'detect',
                     '/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/cfg/yolo-obj.cfg',
                     '/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/backup/yolo-obj_final.weights',
@@ -53,7 +53,7 @@ def get_cropped_image(image_path, outfile_draw=None, outfile_crop=None):
     :param outfile_draw: path where bbox drawn outfile should be saved
     :param outfile_crop: path where cropped outfile should be saved
     """
-    result = subprocess.run(['./darknet',
+    result = subprocess.run(['/home/ubuntu/darknet/AlexeyAB/darknet/darknet',
                     'detect',
                     '/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/cfg/yolo-obj.cfg',
                     '/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/backup/yolo-obj_final.weights',
