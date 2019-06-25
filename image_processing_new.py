@@ -10,7 +10,7 @@ from fubar_REST import tf_serving_predict
 from fubar_CONF import label_dict, labels_of_images_to_be_cropped, tf_s_conf, hprm, path_conf
 
 
-def get_cropped_image(image_path, outfile_draw=None, outfile_crop=None):
+def fubar_master_function(image_path, outfile_draw=None, outfile_crop=None):
     """
     function saving cropped images and images with drawn bounding boxes to specific files
     :param image_path: path to the image on which inference is being run
