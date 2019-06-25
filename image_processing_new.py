@@ -33,6 +33,9 @@ def fubar_master_function(image_path, outfile_draw=None, outfile_crop=None):
     labels = re.findall(f'({detected_categories}):', stdo_blob)
     confidences = re.findall(r'\d+(?=%)', stdo_blob)
     bbox_dim_list = re.findall(r'\d+.\d+ \d+.\d+ \d+.\d+ \d+.\d+', stdo_blob)
+    print(labels)
+    print(confidences)
+    print(bbox_dim_list)
     blobs = zip(labels, confidences, bbox_dim_list)
     data = dict()
     predictions = []
