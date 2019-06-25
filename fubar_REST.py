@@ -8,7 +8,7 @@ import requests
 host = 'localhost'
 port = '8501'
 batch_size = 1
-image_path = 'img0.jpg'
+image_path = '/home/ubuntu/darknet/AlexeyAB/darknet/result_img/img12.jpg'
 model_name = 'fubar'
 model_version = '4'
 signature_name = 'serving_default'
