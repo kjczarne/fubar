@@ -82,7 +82,7 @@ def get_cropped_image(image_path, outfile_draw=None, outfile_crop=None):
             if outfile_crop is not None:
                 crop_pil_img.save(outfile_crop)  # save image if specified
             # preprocess the image for model input
-            prep_img = np.expand_dims((crop_pil_img.resize((hprm['INPUT_H'], 
+            prep_img = np.expand_dims(np.array(crop_pil_img.resize((hprm['INPUT_H'], 
                                                            hprm['INPUT_W']))/.255), 
                                                            axis=0)
             # run predictions and append to the prediction list
