@@ -3,36 +3,11 @@ from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
 import matplotlib
 matplotlib.use('TkAgg')
 
-from pathlib import Path
+from cnn_toolkit import pool_generator_classes
 
-from cnn_toolkit import filepattern, NeptuneMonitor, \
-    pool_generator_classes, show_architecture, frosty, \
-    file_train_test_split
+from fubar_CONF import hprm, paths
 
-# ---------------------
-# HERE LIVE THE IMAGES |
-# ---------------------
 
-file_formats = ['*.jpg', '*.jpeg', '*.png']
-# path_to_archive = Path.home() / Path('fubar/FubarArchive/')
-path_to_archive = '/home/ubuntu/darknet/AlexeyAB/darknet/result_img/'
-paths = file_train_test_split(path_to_archive, file_formats, ignored_directories=['inference'])
-
-# ---------------------------------------------------------------------------------------------------------------------
-
-# ----------------
-# HYPERPARAMETERS |
-# ----------------
-hprm = dict(
-    INPUT_H=299,
-    INPUT_W=299,
-    BATCH_SIZE=32,
-    TRAIN_SIZE=paths[0].shape[0],
-    TEST_SIZE=paths[1].shape[0],
-    EPOCHS=10,
-    EARLY_STOPPING_DELTA=0.001
-)
-# ---------------------------------------------------------------------------------------------------------------------
 
 # -------------------
 # DATA PREPROCESSING |

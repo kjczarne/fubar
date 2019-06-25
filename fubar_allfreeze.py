@@ -12,7 +12,8 @@ import neptune as npt
 import tensorflow as tf
 
 from cnn_toolkit import filepattern, NeptuneMonitor, show_architecture, frosty, make_pred_output_callback
-from fubar_preprocessing import hprm, training_generator, validation_generator
+from fubar_preprocessing import training_generator, validation_generator
+from fubar_CONF import hprm
 
 from npt_token_file import project_path, api
 npt_token = api

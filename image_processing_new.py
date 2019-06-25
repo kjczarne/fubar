@@ -7,26 +7,8 @@ import cv2
 from PIL import Image
 import numpy as np
 from fubar_REST import tf_serving_predict
+from fubar_CONF import label_dict, labels_of_images_to_be_cropped, tf_s_conf
 
-label_dict = {
-    'lock': {
-        'color': 1000
-    },
-    'rack': {
-        'color': 2000
-    }
-}
-
-labels_of_images_to_be_cropped = 'lock'
-
-tf_s_conf = dict(
-    host='localhost',
-    port='8501',
-    model_name='fubar',
-    model_version='4',
-    batch_size=1,
-    signature_name='serving_default'
-)
 
 def get_lock_image(i):
     #bscript = '#!/bin/bash\n./darknet detect /home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/cfg/yolo-obj.cfg' + ' ' + \

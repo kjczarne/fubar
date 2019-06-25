@@ -16,10 +16,10 @@ import json
 import os
 
 from cnn_toolkit import filepattern, NeptuneMonitor, \
-    pool_generator_classes, show_architecture, frosty, \
-    file_train_test_split, get_fresh_weights_and_model, \
-    make_pred_output_callback, contiguous_true_vs_predicted
-from fubar_preprocessing import hprm, training_generator, validation_generator, paths
+    frosty, get_fresh_weights_and_model, \
+    make_pred_output_callback
+from fubar_preprocessing import training_generator, validation_generator
+from fubar_CONF import hprm
 
 from npt_token_file import project_path, api
 npt_token = api

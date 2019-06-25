@@ -1,7 +1,7 @@
 # Adapted from https://gist.github.com/eavidan/07928337e2859bf8fa607f5693ee4a89#file-tensorflow_serving_rest_client-py
 
 from cnn_toolkit import image_bytestring, load_byte_img
-from fubar_preprocessing import hprm
+from fubar_CONF import hprm
 import numpy as np
 import requests
 from PIL import Image
