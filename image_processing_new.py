@@ -7,7 +7,7 @@ import cv2
 from PIL import Image
 import numpy as np
 from fubar_REST import tf_serving_predict
-from fubar_CONF import label_dict, labels_of_images_to_be_cropped, tf_s_conf
+from fubar_CONF import label_dict, labels_of_images_to_be_cropped, tf_s_conf, hprm
 
 
 def get_lock_image(i):
@@ -76,12 +76,18 @@ def get_cropped_image(image_path, outfile_draw=None, outfile_crop=None):
         box = (x, y, int(width), int(height))  # format sufficient to draw bounding boxes
         data[idx] = dict(bbox=box, confidence=confidence, label=label)
         x, y, w, h = box
-        if label in labels_of_images_to_be_cropped:
-            crop_img = im[y:y+h, x:x+w]
+        if label in labels_of_images_to_be_cropped:  # if this is a 'lock"
+            crop_img = im[y:y+h, x:x+w]  # crop image
+            crop_pil_img = Image.fromarray(crop_img[:,:,::-1])
             if outfile_crop is not None:
-                Image.fromarray(crop_img[:,:,::-1]).save(outfile_crop)
+                crop_pil_img.save(outfile_crop)  # save image if specified
+            # preprocess the image for model input
+            prep_img = np.expand_dims((crop_pil_img.resize((hprm['INPUT_H'], 
+                                                           hprm['INPUT_W']))/.255), 
+                                                           axis=0)
+            # run predictions and append to the prediction list
             predictions.append(tf_serving_predict(
-                np.expand_dims(crop_img[:,:,::-1], axis=0),
+                prep_img,
                 host=tf_s_conf['host'],
                 port=tf_s_conf['port'],
                 model_name=tf_s_conf['model_name'],
