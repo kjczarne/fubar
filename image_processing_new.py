@@ -81,7 +81,7 @@ def get_cropped_image(image_path, outfile_draw=None, outfile_crop=None):
             if outfile_crop is not None:
                 Image.fromarray(crop_img[:,:,::-1]).save(outfile_crop)
             predictions.append(tf_serving_predict(
-                crop_img[:,:,::-1],
+                np.expand_dims(crop_img[:,:,::-1], axis=0),
                 host=tf_s_conf['host'],
                 port=tf_s_conf['port'],
                 model_name=tf_s_conf['model_name'],
