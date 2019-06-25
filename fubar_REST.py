@@ -4,7 +4,6 @@ from cnn_toolkit import image_bytestring, load_byte_img
 from fubar_CONF import hprm
 import numpy as np
 import requests
-from PIL import Image
 
 # host = 'localhost'
 # port = '8501'
@@ -34,7 +33,7 @@ def tf_serving_predict(image,
     """
     if isinstance(image, str):
         im = load_byte_img(image_bytestring(image), hprm['INPUT_H'], hprm['INPUT_W'])
-    elif isinstance(image, np.array):
+    elif isinstance(image, np.ndarray):
         pass
     else:
         raise TypeError('Invalid image argument!')
