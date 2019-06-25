@@ -3,13 +3,13 @@ from cnn_toolkit import file_train_test_split
 # ------------------------------
 # YOLO-CONFIG FOR MASTER SCRIPT |
 # ------------------------------
-
+# colors are in BGR format consistent with CV2
 label_dict = {
     'lock': {
-        'color': 1000
+        'color': (226, 4, 185)
     },
     'rack': {
-        'color': 2000
+        'color': (67, 226, 4)
     }
 }
 
