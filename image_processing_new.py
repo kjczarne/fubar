@@ -6,6 +6,7 @@ import re
 import cv2
 from PIL import Image
 import numpy as np
+from fubar_REST import tf_serving_predict
 
 label_dict = {
     'lock': {
@@ -18,10 +19,19 @@ label_dict = {
 
 labels_of_images_to_be_cropped = 'lock'
 
+tf_s_conf = dict(
+    host='localhost',
+    port='8501',
+    model_name='fubar',
+    model_version='4',
+    batch_size=1,
+    signature_name='serving_default'
+)
+
 def get_lock_image(i):
     #bscript = '#!/bin/bash\n./darknet detect /home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/cfg/yolo-obj.cfg' + ' ' + \
     #'/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/backup/yolo-obj_final.weights' + ' ' + '"' + i + '"'
-    result = subprocess.run(['/home/ubuntu/darknet/AlexeyAB/darknet/darknet',
+    result = subprocess.run(['./darknet',
                     'detect',
                     '/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/cfg/yolo-obj.cfg',
                     '/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/backup/yolo-obj_final.weights',
@@ -53,7 +63,8 @@ def get_cropped_image(image_path, outfile_draw=None, outfile_crop=None):
     :param outfile_draw: path where bbox drawn outfile should be saved
     :param outfile_crop: path where cropped outfile should be saved
     """
-    result = subprocess.run(['/home/ubuntu/darknet/AlexeyAB/darknet/darknet',
+    os.chdir('/home/ubuntu/darknet/AlexeyAB/darknet/')
+    result = subprocess.run(['./darknet',
                     'detect',
                     '/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/cfg/yolo-obj.cfg',
                     '/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/backup/yolo-obj_final.weights',
@@ -69,6 +80,7 @@ def get_cropped_image(image_path, outfile_draw=None, outfile_crop=None):
     bbox_dim_list = re.findall(r'\d+.\d+ \d+.\d+ \d+.\d+ \d+.\d+', stdo_blob)
     blobs = zip(labels, confidences, bbox_dim_list)
     data = dict()
+    predictions = []
     for idx, i in enumerate(blobs):
         # use regex to find respective parts of the stdout:
         label = i[0]
@@ -80,20 +92,23 @@ def get_cropped_image(image_path, outfile_draw=None, outfile_crop=None):
         x = int(centerX - (width / 2))  # top-left corner x coordinate
         y = int(centerY - (height / 2))  # top-left corner y coordinate
         box = (x, y, int(width), int(height))  # format sufficient to draw bounding boxes
-        color = label_dict[label]['color']  # set color of the bbox according to label
-        data[i] = dict(bbox=box, confidence=confidence, label=label)
+        data[idx] = dict(bbox=box, confidence=confidence, label=label)
         x, y, w, h = box
         if label in labels_of_images_to_be_cropped:
+            crop_img = im[y:y+h, x:x+w]
             if outfile_crop is not None:
-                crop_img = im[y:y+h, x:x+w]
                 Image.fromarray(crop_img[:,:,::-1]).save(outfile_crop)
+            predictions.append(tf_serving_predict(
+                crop_img[:,:,::-1],
 
-    all_labels = [i[label] for i in data.values()]
+            ))
+
+    all_labels = [i['label'] for i in data.values()]
     unique, counts = np.unique(all_labels, return_counts=True)
     label_counts = dict(zip(unique, counts))
 
     for k, v in label_counts.items():
-        print(f'Found {v} instances of {k}')
+        print(f'Found {v} instance(s) of {k}')
 
     if outfile_draw is not None:
         # draw bbox around image:
@@ -101,12 +116,13 @@ def get_cropped_image(image_path, outfile_draw=None, outfile_crop=None):
             x, y, w, h = sub_dict['bbox']
             confidence = sub_dict['confidence']
             label = sub_dict['label']
+            color = label_dict[label]['color']  # set color of the bbox according to label
             cv2.rectangle(im, (x, y), (x + w, y + h), color, 10)
             text = "{}: {:.4f}".format(label, confidence)
-            cv2.putText(im, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 16, color, 3)
+            cv2.putText(im, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 5, color, 2)
         Image.fromarray(im[:,:,::-1]).save(outfile_draw)  # convert to RGB from BGR and save
     
-    return data
+    return predictions
     
 
 # get_lock_image('/home/ubuntu/darknet/test/IMG_2277.jpg')

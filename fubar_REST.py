@@ -4,6 +4,7 @@ from cnn_toolkit import image_bytestring, load_byte_img
 from fubar_preprocessing import hprm
 import numpy as np
 import requests
+from PIL import Image
 
 # host = 'localhost'
 # port = '8501'
@@ -13,7 +14,7 @@ import requests
 # signature_name = 'serving_default'
 
 
-def tf_serving_predict(image_path,
+def tf_serving_predict(image,
                        host,
                        port=8501,
                        model_name='fubar',
@@ -22,18 +23,22 @@ def tf_serving_predict(image_path,
                        signature_name='serving_default'):
     """
     function placing calls to the TF Serving Model through REST-API interface
-    :param image_path: path to inference image
+    :param image: path to inference image or image as np.array
     :param host: host address of server with exposed API port
     :param port: API port, default is 8501
     :param model_name: string, model name, default is 'fubar'
     :param model_version: integer, denotes currently served model version
     :param batch_size: batch_size of photos, default is 1
-    :param signature_name:
-    :return:
+    :param signature_name: model signature_name
+    :return: JSON string result
     """
-    image = load_byte_img(image_bytestring(image_path), hprm['INPUT_H'], hprm['INPUT_W'])
-    batch = np.repeat(image, batch_size, axis=0).tolist()
-
+    if isinstance(image, str):
+        im = load_byte_img(image_bytestring(image), hprm['INPUT_H'], hprm['INPUT_W'])
+    elif isinstance(image, np.array):
+        pass
+    else:
+        raise TypeError('Invalid image argument!')
+    batch = np.repeat(im, batch_size, axis=0).tolist()
     request = {
         "signature_name": signature_name,
         "instances": batch
