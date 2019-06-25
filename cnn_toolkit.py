@@ -1,5 +1,4 @@
 import glob
-from decimal import Decimal
 from tensorflow.python.keras.callbacks import Callback
 import neptune as npt
 import numpy as np
@@ -9,9 +8,7 @@ import re
 from pathlib import Path
 import tensorflow as tf
 from PIL import Image
-import io
 from io import BytesIO
-import json
 
 
 def filepattern(pattern, extension, defaulttag='0', add_string=""):

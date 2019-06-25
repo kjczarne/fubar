@@ -23,6 +23,19 @@ tf_s_conf = dict(
     batch_size=1,
     signature_name='serving_default'
 )
+# ---------------------------------------------------------------------------------------------------------------------
+
+# ----------------------
+# MASTER PATH CONF DICT |
+# ----------------------
+path_conf = {
+    'yolo_cfg': '/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/cfg/yolo-obj.cfg',
+    'yolo_weights': '/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/backup/yolo-obj_final.weights',
+    'yolo_darknet_app': '/home/ubuntu/darknet/AlexeyAB/darknet/',
+    'yolo_test_set': '/home/ubuntu/darknet/images/test',
+    'yolo_training_set': '/home/ubuntu/darknet/images/train',
+    'cropped_images_for_training': '/home/ubuntu/darknet/AlexeyAB/darknet/result_img/'
+}
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -31,9 +44,9 @@ tf_s_conf = dict(
 # ---------------------------------------------
 
 file_formats = ['*.jpg', '*.jpeg', '*.png']
-# path_to_archive = Path.home() / Path('fubar/FubarArchive/')
-path_to_archive = '/home/ubuntu/darknet/AlexeyAB/darknet/result_img/'
+path_to_archive = path_conf['cropped_images_for_training']
 paths = file_train_test_split(path_to_archive, file_formats, ignored_directories=['inference'])
+# we use default 80/20 split
 
 # ---------------------------------------------------------------------------------------------------------------------
 

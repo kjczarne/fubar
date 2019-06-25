@@ -1,8 +1,4 @@
-from tensorflow.python.keras.applications.inception_v3 import InceptionV3
-from tensorflow.python.keras.layers import GlobalAveragePooling2D, Dense
-from tensorflow.python.keras.preprocessing import image
 from tensorflow.python.keras.models import Model
-from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.python.keras.callbacks import History
 
 import matplotlib

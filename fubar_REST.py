@@ -5,13 +5,6 @@ from fubar_CONF import hprm
 import numpy as np
 import requests
 
-# host = 'localhost'
-# port = '8501'
-# batch_size = 1
-# model_name = 'fubar'
-# model_version = '4'
-# signature_name = 'serving_default'
-
 
 def tf_serving_predict(image,
                        host,
@@ -32,7 +25,7 @@ def tf_serving_predict(image,
     :return: JSON string result
     """
     if isinstance(image, str):
-        im = load_byte_img(image_bytestring(image), hprm['INPUT_H'], hprm['INPUT_W'])
+        im = load_byte_img(image_bytestring(image), hprm['INPUT_H'], hprm['INPUT_W']) / 255
     elif isinstance(image, np.ndarray):
         im = image
     else:

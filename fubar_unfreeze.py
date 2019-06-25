@@ -1,18 +1,7 @@
-from tensorflow.python.keras.applications.inception_v3 import InceptionV3
-from tensorflow.python.keras.layers import GlobalAveragePooling2D, Dense
-from tensorflow.python.keras.preprocessing import image
-from tensorflow.python.keras.models import Model
-from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.python.keras.callbacks import History
-
 import matplotlib
-matplotlib.use('TkAgg')
-
-from pathlib import Path
-
 import neptune as npt
 import tensorflow as tf
-import json
 import os
 
 from cnn_toolkit import filepattern, NeptuneMonitor, \
@@ -22,6 +11,8 @@ from fubar_preprocessing import training_generator, validation_generator
 from fubar_CONF import hprm
 
 from npt_token_file import project_path, api
+
+matplotlib.use('TkAgg')
 npt_token = api
 npt_project = project_path
 

@@ -7,34 +7,7 @@ import cv2
 from PIL import Image
 import numpy as np
 from fubar_REST import tf_serving_predict
-from fubar_CONF import label_dict, labels_of_images_to_be_cropped, tf_s_conf, hprm
-
-
-def get_lock_image(i):
-    #bscript = '#!/bin/bash\n./darknet detect /home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/cfg/yolo-obj.cfg' + ' ' + \
-    #'/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/backup/yolo-obj_final.weights' + ' ' + '"' + i + '"'
-    result = subprocess.run(['./darknet',
-                    'detect',
-                    '/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/cfg/yolo-obj.cfg',
-                    '/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/backup/yolo-obj_final.weights',
-                    i], stdout=subprocess.PIPE)
-    output = result.stdout.decode('utf-8')
-    print(output)
-    m = re.findall('lock:', output)  
-    print('we found ' + str(len(m)) + ' lock(s)')
-    if len(m) == 1:
-       racks = re.findall('rack:', output)
-       print('and ' + str(len(racks)) + ' rack(s)')
-       lines = len(m) + len(racks)
-       for line in output.splitlines():
-           if re.findall('lock:', line):
-                print('yes')
-                print(line)
-           else:
-               print('no') 
-
-       return {'racks': len(racks)}
-    return False
+from fubar_CONF import label_dict, labels_of_images_to_be_cropped, tf_s_conf, hprm, path_conf
 
 
 def get_cropped_image(image_path, outfile_draw=None, outfile_crop=None):
@@ -45,11 +18,11 @@ def get_cropped_image(image_path, outfile_draw=None, outfile_crop=None):
     :param outfile_draw: path where bbox drawn outfile should be saved
     :param outfile_crop: path where cropped outfile should be saved
     """
-    os.chdir('/home/ubuntu/darknet/AlexeyAB/darknet/')
+    os.chdir(path_conf['yolo_darknet_app'])
     result = subprocess.run(['./darknet',
                     'detect',
-                    '/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/cfg/yolo-obj.cfg',
-                    '/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/backup/yolo-obj_final.weights',
+                    path_conf['yolo_cfg'],
+                    path_conf['yolo_weights'],
                     image_path], stdout=subprocess.PIPE)
     stdo_blob = result.stdout.decode('utf-8')
 

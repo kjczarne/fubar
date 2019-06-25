@@ -1,19 +1,12 @@
 from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
-
 import matplotlib
-matplotlib.use('TkAgg')
-
 from cnn_toolkit import pool_generator_classes
-
 from fubar_CONF import hprm, paths
-
-
+matplotlib.use('TkAgg')
 
 # -------------------
 # DATA PREPROCESSING |
 # -------------------
-# We need a random split of 80/20 for training and validation images. Make a DF mapping files from random categories
-# to a validation or training set and use it to construct training_generator and validation_generator
 
 test_image_datagen = ImageDataGenerator(
         rescale=1./255)

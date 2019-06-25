@@ -1,5 +1,4 @@
 import tensorflow as tf
-import json
 import os
 
 model_version = input('Enter model version to be exported as protobuf :')
