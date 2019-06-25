@@ -34,7 +34,7 @@ def tf_serving_predict(image,
     if isinstance(image, str):
         im = load_byte_img(image_bytestring(image), hprm['INPUT_H'], hprm['INPUT_W'])
     elif isinstance(image, np.ndarray):
-        pass
+        im = image
     else:
         raise TypeError('Invalid image argument!')
     batch = np.repeat(im, batch_size, axis=0).tolist()
