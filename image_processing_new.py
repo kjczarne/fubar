@@ -110,8 +110,8 @@ def get_cropped_image(image_path, outfile_draw=None, outfile_crop=None):
             label = sub_dict['label']
             color = label_dict[label]['color']  # set color of the bbox according to label
             cv2.rectangle(im, (x, y), (x + w, y + h), color, 10)
-            text = "{}: {:.4f}".format(label, confidence)
-            cv2.putText(im, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 5, color, 2)
+            text = f'{label}: {confidence}%'
+            cv2.putText(im, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 5, color, 10)
         Image.fromarray(im[:,:,::-1]).save(outfile_draw)  # convert to RGB from BGR and save
     
     return predictions
