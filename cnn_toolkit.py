@@ -14,46 +14,40 @@ from io import BytesIO
 import json
 
 
-def filepattern(pattern, extension, defaulttag='0.0', add_string=""):
+def filepattern(pattern, extension, defaulttag='0', add_string=""):
     """
     Generates pattern names for efficient exporting of files, great for iterative saving of model parameters as HDF5
     and architechtures as JSON when working with keras
 
-    Example call: filepattern('hist_ana_', '.pkl', '5.0', 'convolution_stack) -> hist_ana_5.0convolution_stack.pkl
-    above is true provided there is no version tag in the directory higher than 5.0
+    Example call: filepattern('hist_ana_', '.pkl', '5', 'convolution_stack) -> hist_ana_5convolution_stack.pkl
+    above is true provided there is no version tag in the directory higher than 5
 
     :param pattern: defines starting pattern of a file
     :param extension: defines searched file extension
     :param defaulttag: defines default tag if no file that matches pattern is found
     :param add_string: additional string tag
-    :return: returns a filename that follows the same pattern but has higher tag by 0.1
+    :return: returns a filename that follows the same pattern but has higher tag by 1
     """
-    lst = []
-    expression = pattern + '[0-9].[0-9]*' + extension
-    # above matches two digit tag separated by dot and accepts any number of additional
+    expression = pattern + '[0-9]+' + extension
+    # above matches integer tag and accepts any number of additional
     # characters before extension is matched
 
-    for i in glob.glob(expression):
-        i = i[(len(pattern)):(len(pattern) + 3)]
-        i = Decimal(i)
-        lst.append(i.quantize(Decimal('0.1'), rounding='ROUND_DOWN'))
-    # finds patterns and saves tags in a list as Decimal objects
+    globbed = glob.glob(expression)
 
-    if len(lst) != 0:
-        newtag = Decimal('0.1') + Decimal(max(lst))
-        newtag = str(newtag)
-    else:
-        pass  # do nothing (last conditional solves this case already)
+    lst = re.findall(r'[0-9]+(?=\.)', ''.join(globbed))
 
     if defaulttag is None:
-        defaulttag = Decimal('0.0')
+        defaulttag = '0'
     else:
-        defaulttag = Decimal(defaulttag) + Decimal('0.1')
+        defaulttag = str(int(defaulttag) + 1)
 
-    if len(lst) == 0:
-        filename = pattern + str(defaulttag) + add_string + extension
-    else:
+    if len(lst) != 0:
+        newtag = 1 + max(lst)
+        newtag = str(newtag)
         filename = pattern + newtag + add_string + extension
+    else:
+        filename = pattern + str(defaulttag) + add_string + extension
+
     return filename
 
 
@@ -466,11 +460,12 @@ def serialize_model(model_file, model_version='1', weights_file=None):
             model = tf.keras.models.model_from_json(f.read())
         model.load_weights(weights_file)
     tf.saved_model.save(model, os.getcwd() + '/' + model_version)
-# -----------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------
 
 # --------------------------------------
 # HELPER FUNCTIONS FOR MODEL EVALUATION |   
 # --------------------------------------
+
 
 def true_vs_predicted(model, positive_class, negative_class, base_path, accepted_file_formats):
     """
@@ -480,7 +475,8 @@ def true_vs_predicted(model, positive_class, negative_class, base_path, accepted
     :param negative_class: string, folder name of class defined as 0
     :param base_path: string, base path to the folder containing category subfolders
     :param accepted_file_formats: list, glob-like file formats e.g. ['*.jpg']
-    :return: 4-tuple of np.arrays containing pred values of class 1, true values of class 1, same respectively for class 0
+    :return: 4-tuple of np.arrays containing pred values of class 1, true values of class 1,
+             same respectively for class 0
     """
     preds=np.empty((1,0))
     glob_list = []
