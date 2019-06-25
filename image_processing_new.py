@@ -28,8 +28,8 @@ def fubar_master_function(image_path, outfile_draw=None, outfile_crop=None):
     print(stdo_blob)
     im = cv2.imread(image_path)
     H, W, _ = im.shape  # read dimensions of the image
+    # use regex to find respective parts of the stdout:
     detected_categories = "|".join(label_dict.keys())
-    pattern = f'({detected_categories}): \d+%\n\d+.\d+ \d+.\d+ \d+.\d+ \d+.\d+'
     labels = re.findall(f'({detected_categories}):', stdo_blob)
     confidences = re.findall(r'\d+(?=%)', stdo_blob)
     bbox_dim_list = re.findall(r'\d+.\d+ \d+.\d+ \d+.\d+ \d+.\d+', stdo_blob)
@@ -41,7 +41,6 @@ def fubar_master_function(image_path, outfile_draw=None, outfile_crop=None):
     data = dict()
     predictions = []
     for idx, i in enumerate(blobs):
-        # use regex to find respective parts of the stdout:
         label = i[0]
         confidence = int(i[1])
         bbox_dims = i[2].split(' ')
