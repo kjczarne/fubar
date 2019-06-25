@@ -64,13 +64,16 @@ def get_cropped_image(image_path, outfile_draw=None, outfile_crop=None):
     H, W, _ = im.shape  # read dimensions of the image
     detected_categories = "|".join(label_dict.keys())
     pattern = f'({detected_categories}): \d+%\n\d+.\d+ \d+.\d+ \d+.\d+ \d+.\d+'
-    blobs = re.findall(pattern, stdo_blob)
+    labels = re.findall(f'({detected_categories}):', stdo_blob)
+    confidences = re.findall(r'\d+(?=%)', stdo_blob)
+    bbox_dim_list = re.findall(r'\d+.\d+ \d+.\d+ \d+.\d+ \d+.\d+', stdo_blob)
+    blobs = zip(labels, confidences, bbox_dim_list)
     data = dict()
     for idx, i in enumerate(blobs):
         # use regex to find respective parts of the stdout:
-        confidence = int(''.join(re.findall(r'\d+(?=%)', i)))
-        label = ''.join(re.findall(detected_categories, i))
-        bbox_dims = ''.join(re.findall(r'\d+.\d+ \d+.\d+ \d+.\d+ \d+.\d+', i)).split(' ')
+        label = i[0]
+        confidence = int(i[1])
+        bbox_dims = i[2].split(' ')
         bbox_dims = [float(i) for i in bbox_dims]  # convert bbox_dims to floats
         box = bbox_dims * np.array([W, H, W, H])  # rescale to original image dims
         centerX, centerY, width, height = box.astype("int")
