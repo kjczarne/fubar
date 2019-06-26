@@ -6,6 +6,7 @@ import re
 import cv2
 from PIL import Image
 import numpy as np
+import argparse
 from fubar_REST import tf_serving_predict
 from fubar_CONF import label_dict, labels_of_images_to_be_cropped, tf_s_conf, hprm, path_conf
 
@@ -18,6 +19,7 @@ def fubar_master_function(image_path, outfile_draw=None, outfile_crop=None):
     :param outfile_draw: path where bbox drawn outfile should be saved
     :param outfile_crop: path where cropped outfile should be saved
     """
+    cwd = os.getcwd()
     os.chdir(path_conf['yolo_darknet_app'])
     result = subprocess.run(['./darknet',
                     'detect',
@@ -89,10 +91,19 @@ def fubar_master_function(image_path, outfile_draw=None, outfile_crop=None):
             text = f'{label}: {confidence}%'
             cv2.putText(im, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 5, color, 10)
         Image.fromarray(im[:,:,::-1]).save(outfile_draw)  # convert to RGB from BGR and save
-    
+    os.chdir(cwd)
     return predictions
     
 
-# get_lock_image('/home/ubuntu/darknet/test/IMG_2277.jpg')
-   # cropped_images = get_cropped_image()
-   # print(cropped_images)
+if __name__ == '__main__':
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-i", "--image", required=True,
+	help="path to input image")
+    ap.add_argument("-d", "--draw", default='draw.jpg',
+	help="path pointing to where you want to store image with bboxes drawn")
+    ap.add_argument("-c", "--crop", default='crop.jpg',
+	help="path pointing to where you want to store cropped image")
+    args = vars(ap.parse_args())
+    fubar_master_function(args['image'], 
+                          outfile_draw=args['draw'], 
+                          outfile_crop=args['crop'])
