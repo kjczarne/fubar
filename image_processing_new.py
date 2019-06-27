@@ -104,6 +104,7 @@ if __name__ == '__main__':
     ap.add_argument("-c", "--crop", default='crop.jpg',
 	help="path pointing to where you want to store cropped image")
     args = vars(ap.parse_args())
-    fubar_master_function(args['image'], 
-                          outfile_draw=args['draw'], 
-                          outfile_crop=args['crop'])
+    ret = fubar_master_function(args['image'], 
+                                outfile_draw=args['draw'], 
+                                outfile_crop=args['crop'])
+    print(ret)
