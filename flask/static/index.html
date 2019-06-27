@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <title><!-- Your title goes here --></title>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <link rel='shortcut icon' href='Your favicon path goes here' type='image/x-icon'>
+  <link href='https://api.mapbox.com/mapbox-assembly/v0.23.2/assembly.min.css' rel='stylesheet'>
+  <script async defer src='https://api.mapbox.com/mapbox-assembly/v0.23.2/assembly.js'></script>
+ <style>
+  body { 
+background-image: url(uber_jump.svg);
+}
+  </style> 
+</head>
+<body>
+<div class="prose">
+<h1>Take a photo! </h1>
+  <label for="file" class="btn">Select Image</label>
+  <input id="file" style="visibility:hidden;" type="file" accept="image/*" capture>
+  <input type=submit value=Upload>
+</div>
+    <script>
+      if ("geolocation" in navigator) {
+        var gps = navigator.geolocation.getCurrentPosition(function(position) {
+          for (key in position.coords) {
+
+	      console.log(key)
+//            document.write(key + ’: ‘ + position.coords[key]);
+//            document.write(‘ < br > ‘);
+          }
+        });
+      }
+
+    </script>
+</body>
+</html>
+
+
+

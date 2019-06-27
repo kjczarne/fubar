@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <title><!-- Your title goes here --></title>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <link rel='shortcut icon' href='Your favicon path goes here' type='image/x-icon'>
+  <link rel="stylesheet" href={{ url_for('static', filename='style.css') }}>
+  <script async defer src='https://api.mapbox.com/mapbox-assembly/v0.23.2/assembly.js'></script>
+</head>
+<body>
+<div class="prose">
+<h1>Thank You! </h1>
+<div>Photo is stored at: {{drawpath}}</div>
+<div class='img_div'><img src={{url_for('send_file', filename=filename)}} alt="Your image" ></img></div>
+<p>{{pred}}</p>
+</div>
+    <script>
+      if ("geolocation" in navigator) {
+        var gps = navigator.geolocation.getCurrentPosition(function(position) {
+          for (key in position.coords) {
+
+	      console.log(key)
+//            document.write(key + ’: ‘ + position.coords[key]);
+//            document.write(‘ < br > ‘);
+          }
+        });
+      }
+
+    </script>
+</body>
+</html>
+
+
+
