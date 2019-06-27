@@ -1,4 +1,5 @@
 import os
+import re
 from flask import Flask, jsonify, flash, request, redirect, url_for, render_template, send_from_directory
 from PIL import Image
 from werkzeug.utils import secure_filename
@@ -60,16 +61,17 @@ def upload_file():
 def send_file(filename):
     # path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-    # render_template("photo_sent.html", 
+    # render_template("photo_sent.html",
     #             drawpath=path,
     #             draw_image=
     #         )
-
 
 @app.route('/show/<filename>')
 def uploaded_file(filename):
     path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     return render_template('photo_sent.html', drawpath=path, filename=filename, pred=pred)
+
+
 
 @app.route('/data')
 def names():
@@ -80,4 +82,3 @@ def names():
 if __name__ == '__main__':
     # app.debug = True
     app.run(host='0.0.0.0')
-
