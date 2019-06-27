@@ -1,15 +1,11 @@
-
-
-
 import os
 from flask import Flask, jsonify, flash, request, redirect, url_for, render_template, send_from_directory
 from PIL import Image
 from werkzeug.utils import secure_filename
 import importlib.util
+import sys
 # from image_processing_new import fubar_master_function
-spec = importlib.util.spec_from_file_location("fubar_master", "/home/ubuntu/fubar/image_processing_new.py")
-fubar_master = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(fubar_master)
+sys.path.append('/home/ubuntu/fubar')
 
 UPLOAD_FOLDER = '/home/ubuntu/fubar/flask/uploads'
 # UPLOAD_FOLDER = '/home/ubuntu/fubar/flask/static/uploads'
