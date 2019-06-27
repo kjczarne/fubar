@@ -6,6 +6,7 @@ import importlib.util
 import sys
 # from image_processing_new import fubar_master_function
 sys.path.append('/home/ubuntu/fubar')
+from image_processing_new import fubar_master_function
 
 UPLOAD_FOLDER = '/home/ubuntu/fubar/flask/uploads'
 # UPLOAD_FOLDER = '/home/ubuntu/fubar/flask/static/uploads'
@@ -47,7 +48,7 @@ def upload_file():
             file.save(path)
             drawpath = os.path.join(app.config['UPLOAD_FOLDER'], 'draw.jpg')
             global pred
-            pred = fubar_master.fubar_master_function(path, outfile_draw=drawpath)
+            pred = fubar_master_function(path, outfile_draw=drawpath)
             print(pred)
             return redirect(url_for('uploaded_file',
                                     filename=filename))
