@@ -89,8 +89,8 @@ def fubar_master_function(image_path, outfile_draw=None, outfile_crop=None):
             cv2.putText(im, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 5, color, 10)
         Image.fromarray(im[:,:,::-1]).save(outfile_draw)  # convert to RGB from BGR and save
     os.chdir(cwd)
-    return predictions
-    
+    return predictions, labels
+
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     ap.add_argument("-c", "--crop", default='crop.jpg',
                     help="path pointing to where you want to store cropped image")
     args = vars(ap.parse_args())
-    ret = fubar_master_function(args['image'], 
-                                outfile_draw=args['draw'], 
+    ret = fubar_master_function(args['image'],
+                                outfile_draw=args['draw'],
                                 outfile_crop=args['crop'])
     print(ret)

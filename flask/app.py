@@ -50,7 +50,6 @@ def upload_file():
             drawpath = os.path.join(app.config['UPLOAD_FOLDER'], 'draw.jpg')
             global pred
             pred = fubar_master_function(path, outfile_draw=drawpath)
-            print(pred)
             return redirect(url_for('uploaded_file',
                                     filename=filename))
     # else:
