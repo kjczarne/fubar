@@ -1,6 +1,4 @@
-import sys
 import os
-import glob
 import subprocess
 import re
 import cv2
@@ -15,17 +13,16 @@ def fubar_master_function(image_path, outfile_draw=None, outfile_crop=None):
     """
     function saving cropped images and images with drawn bounding boxes to specific files
     :param image_path: path to the image on which inference is being run
-    :param stdo_blob: intercepted STDOUT from YOLO
     :param outfile_draw: path where bbox drawn outfile should be saved
     :param outfile_crop: path where cropped outfile should be saved
     """
     cwd = os.getcwd()
     os.chdir(path_conf['yolo_darknet_app'])
     result = subprocess.run(['./darknet',
-                    'detect',
-                    path_conf['yolo_cfg'],
-                    path_conf['yolo_weights'],
-                    image_path], stdout=subprocess.PIPE)
+                             'detect',
+                             path_conf['yolo_cfg'],
+                             path_conf['yolo_weights'],
+                             image_path], stdout=subprocess.PIPE)
     stdo_blob = result.stdout.decode('utf-8')
     print(stdo_blob)
     im = cv2.imread(image_path)
@@ -98,11 +95,11 @@ def fubar_master_function(image_path, outfile_draw=None, outfile_crop=None):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument("-i", "--image", required=True,
-	help="path to input image")
+                    help="path to input image")
     ap.add_argument("-d", "--draw", default='draw.jpg',
-	help="path pointing to where you want to store image with bboxes drawn")
+                    help="path pointing to where you want to store image with bboxes drawn")
     ap.add_argument("-c", "--crop", default='crop.jpg',
-	help="path pointing to where you want to store cropped image")
+                    help="path pointing to where you want to store cropped image")
     args = vars(ap.parse_args())
     ret = fubar_master_function(args['image'], 
                                 outfile_draw=args['draw'], 
