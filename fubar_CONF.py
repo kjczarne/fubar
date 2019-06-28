@@ -34,6 +34,7 @@ path_conf = {
     'yolo_darknet_app': '/home/ubuntu/darknet/AlexeyAB/darknet/',
     'yolo_test_set': '/home/ubuntu/darknet/images/test',
     'yolo_training_set': '/home/ubuntu/darknet/images/train',
+    'yolo_obj.data': '/home/ubuntu/darknet/AlexeyAB/darknet/build/darknet/x64/data/obj.data',
     'cropped_images_for_training': '/home/ubuntu/darknet/AlexeyAB/darknet/result_img/'
 }
 
