@@ -11,18 +11,25 @@
 <style>
 
 #img_draw {
-
   display: none;
-
   }
+
+.imgContainer{
+  float:left;
+}
 
 </style>
 <body>
 <div class="prose">
 <h1>Thank You! </h1>
 <div>Photo is stored at: {{drawpath}}</div>
-<div class='img_div'><img src={{url_for('send_file', filename=filename)}} alt="Your image" ></img></div>
-<div id='img_draw'><img src='../uploads/draw.jpg' alt="Objects" ></img></div>
+<div class="imgContainer">
+    <img src={{url_for('send_file', filename=filename)}} alt="Your image" height="200" width="200" ></img>
+</div>
+<div class="imgContainer" id='img_draw'>
+  <img src='../uploads/draw.jpg' height="200" width="200" alt="Objects" ></img>
+</div>
+
 <h2><p>{{message}}</p><h2 align="right">
 <p>{{pred}}</p>
 </div>
