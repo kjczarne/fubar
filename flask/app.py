@@ -15,10 +15,23 @@ from image_processing_new import fubar_master_function
 UPLOAD_FOLDER = '/home/ubuntu/fubar/flask/uploads'
 # UPLOAD_FOLDER = '/home/ubuntu/fubar/flask/static/uploads'
 
+POSTGRES = {
+    'user': config('DATABASE_USER'),
+    'pw': config('DATABASE_PASSWORD'),
+    'db': config('DATABASE_NAME'),
+    'host': config('DATABASE_HOST'),
+    'port': '5432',
+}
+
+
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.secret_key = b'-I\xd9I\xa0\xe7R\x83Q\xc0\xce\xf2\xe4\xc8\x020'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://%(user)s:\
+%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
+
 
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg',])
 
