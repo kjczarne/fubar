@@ -56,16 +56,22 @@ def upload_file():
 
             if objects:
                 message = 'were detected'
-                d = {x:objects.count(x) for x in objects}
+                classes = 0
                 if d:
                     for i in d:
+                        classes += 1
                         if d[i] == 1:
                            detected = str(d[i]) + ' ' + i
-                           message = ' '.join((detected, message))
-
+                           if classes > 1:
+                               message = ' '.join((detected, 'and', message))
+                           else:
+                               message = ' '.join((detected, message))
                         else:
                            detected = str(d[i]) + ' ' + i + 's'
-                           message = ' '.join((detected, message))
+                           if classes > 1:
+                               message = ' '.join((detected, 'and',  message))
+                           else:
+                               message = ' '.join((detected, message))
 
             else:
                 message = 'Nothing was detected, please try again'
