@@ -59,7 +59,7 @@ def fubar_benchmark_function(thresh_linspace_div=10,
     cwd = os.getcwd()
     os.chdir(path_conf['yolo_darknet_app'])
     thresholds = np.linspace(0.05, 0.99, thresh_linspace_div)
-
+    print(f"Searching through thresholds: {thresholds}")
     patterns = {
         'precision': r'(?<=precision = )\d\.\d+',
         'recall': r'(?<=recall = )\d\.\d+',
