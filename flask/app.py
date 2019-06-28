@@ -79,6 +79,12 @@ def upload_file():
             pred = fubar_master_function(path, outfile_draw=drawpath)
             global message
             message = 'were detected'
+            rack_location = RackLocation(
+            location='POINT(-122.4111 37.6305)',numracks=0)
+            session.add(rack_location)
+            session.commit()
+            session.refresh(rack_location)
+            print("id", rack_location.id)
             objects = pred[1]
             d = {x:objects.count(x) for x in objects}
             if objects:
