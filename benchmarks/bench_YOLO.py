@@ -32,7 +32,18 @@ def fubar_benchmark_function(thresh_linspace_div=10, iou_thresh=0.5):
         #                          '-thresh',
         #                          i], stdout=subprocess.PIPE)
         # stdo_blob = result.stdout.decode('utf-8')
-
+        result = "calculation mAP (mean average precision)...\
+408\
+ detections_count = 1276, unique_truth_count = 701\
+class_id = 0, name = lock, ap = 86.82%           (TP = 279, FP = 9)\
+class_id = 1, name = rack, ap = 80.40%           (TP = 225, FP = 23)\
+\
+ for thresh = 0.50, precision = 0.94, recall = 0.72, F1-score = 0.81\
+ for thresh = 0.50, TP = 504, FP = 32, FN = 197, average IoU = 70.68 %\
+\
+ IoU threshold = 50 %, used Area-Under-Curve for each unique Recall\
+ mean average precision (mAP@0.50) = 0.836113, or 83.61 %\
+Total Detection Time: 33.000000 Seconds"
         # per-class TP, FP and NP are sorted 0 to n, where n is number of classes
         patterns = {
             'precision': r'precision = \d\.\d+',
@@ -50,18 +61,8 @@ def fubar_benchmark_function(thresh_linspace_div=10, iou_thresh=0.5):
             'map': r'\(mAP@\d\.\d+\) = \d\.\d+'
         }
         # re.findall()
-        # results = {
-        #     'precision': r'precision = \d\.\d+',
-        #     'recall': r'recall = \d\.\d+',
-        #     'f1': r'precision = \d\.\d+',
-        #     'TP':,
-        #     'FP':,
-        #     'FN':,
-        #     'TP_per_class':,
-        #     'FP_per_class':,
-        #     'FN_per_class':,
-        # }
-    return patterns
+        results = {k: re.findall(v, result) for k, v in patterns.items()}
+    return results
 
 
 if __name__ == '__main__':
