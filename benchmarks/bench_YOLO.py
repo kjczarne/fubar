@@ -125,15 +125,20 @@ Total Detection Time: 33.000000 Seconds"
                         except ValueError:
                             repl_list.append(j)  # finally it can be just a string
             v = repl_list
+            if len(v) == 1:
+                copy_results[k] = v[0]
+            else:
+                copy_results[k] = v
 
             # FN = all - TP
             # Recall = TP / (TP + FN)
             # Precision = TP / (TP + FP)
-            copy_results['FN_'] = [int(alles) - int(tp) for alles in category_counts for tp in results['TP_']]
-            copy_results['recall_'] = [(int(tp) / int(alles)) for alles in category_counts for tp in results['TP_']]
-            copy_results['precision_'] = [(int(tp) / (int(tp) + int(fp))) for fp in results['FP_']\
-                                          for tp in results['TP_']]
-
+        copy_results['FN_'] = [int(alles) - int(tp) for alles in category_counts for tp in results['TP_']]
+        copy_results['recall_'] = [(int(tp) / int(alles)) for alles in category_counts for tp in results['TP_']]
+        copy_results['precision_'] = [(int(tp) / (int(tp) + int(fp))) for fp in results['FP_']
+                                       for tp in results['TP_']]
+        results = {k: v for k, v in copy_results.items()}  # update results with the copy
+        for k, v in results.items():
             if len(v) == 1:
                 copy_results[k] = v[0]
             else:
@@ -142,10 +147,37 @@ Total Detection Time: 33.000000 Seconds"
                         copy_results[k] = val  # right now YOLO doesn't allow to separately manipulate thresholds
                                                # for each class, so we just select the first element of the list
                     else:
-                        new_key = k + f'_{results["class_names"][idx]}'
+                        new_key = k + f'{results["class_names"][idx]}'
                         copy_results[new_key] = val
 
         runs_dict[i] = copy_results  # throw in results dict into dict collecting all the runs
+
+    """
+    {0.0: {'precision': 0.94, 
+    'recall': 0.72, 
+    'F1': 0.81, 
+    'TP': 504, 
+    'FP': 32, 
+    'FN': 197, 
+    'TP_': ['279', '225'], 
+    'FP_': ['9', '23'], 
+    'ap_': ['86.82', '80.40'], 
+    'iou_thresh': 50, 
+    'thresh': 0.5, 
+    'class_names': ['lock', 'rack'], 
+    'map': 0.836113, 
+    'FN_': [72, 126, 71, 125], 
+    'recall_': [0.7948717948717948, 0.6410256410256411, 0.7971428571428572, 0.6428571428571429], 
+    'precision_': [0.96875, 0.9615384615384616, 0.9238410596026491, 0.907258064516129], 
+    'TP__lock': 279, 
+    'TP__rack': 225, 
+    'FP__lock': 9, 
+    'FP__rack': 23, 
+    'ap__lock': 86.82, 
+    'ap__rack': 80.4, 
+    'class_names_lock': 'lock', 
+    'class_names_rack': 'rack'}}
+    """
 
     """{0: 
             {'precision': 0.94, 
