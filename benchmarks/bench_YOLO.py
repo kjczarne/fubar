@@ -129,9 +129,10 @@ Total Detection Time: 33.000000 Seconds"
             # FN = all - TP
             # Recall = TP / (TP + FN)
             # Precision = TP / (TP + FP)
-            copy_results['FN_'] = [alles - tp for alles in category_counts for tp in results['TP_']]
-            copy_results['recall_'] = [(tp / alles) for alles in category_counts for tp in results['TP_']]
-            copy_results['precision_'] = [(tp / (tp + fp)) for fp in results['FP_'] for tp in results['TP_']]
+            copy_results['FN_'] = [int(alles) - int(tp) for alles in category_counts for tp in results['TP_']]
+            copy_results['recall_'] = [(int(tp) / int(alles)) for alles in category_counts for tp in results['TP_']]
+            copy_results['precision_'] = [(int(tp) / (int(tp) + int(fp))) for fp in results['FP_']\
+                                          for tp in results['TP_']]
 
             if len(v) == 1:
                 copy_results[k] = v[0]
@@ -212,13 +213,17 @@ Total Detection Time: 33.000000 Seconds"
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument("-t", "--thresh",
-                    help="confidence threshold bucket size, default is 10")
-    ap.add_argument("-i", "--iou_thresh", default='draw.jpg',
-                    help="IoU threshold to check mAP at, default is 0.5")
+                    help="confidence threshold bucket size, default is 10",
+                    default=10)
+    ap.add_argument("-i", "--iou_thresh",
+                    help="IoU threshold to check mAP at, default is 0.5",
+                    default=0.5)
     ap.add_argument('-m', '--metrics', nargs='+',
-                    help='metrics keys to be used for optimization')
+                    help='metrics keys to be used for optimization',
+                    default=['map'])
     ap.add_argument('-o', '--optimization', nargs='+',
-                    help='function names to be used for optimization, usually min/max')
+                    help='function names to be used for optimization, usually min/max',
+                    default=['max'])
     args = vars(ap.parse_args())
 
     ret = fubar_benchmark_function(thresh_linspace_div=args['thresh'],
