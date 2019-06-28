@@ -230,11 +230,11 @@ Total Detection Time: 33.000000 Seconds"
     for metric, list_of_vals in metrics_dict.items():
         func = optimization_dict[metric]
         idx = func(list_of_vals)
-        print(f'Confidence threshold {idx} is optimal with respect to metric {metric}.')
+        print(f'Confidence threshold {thresholds[idx]} is optimal with respect to metric {metric}.')
         for k, v in metrics_dict.items():
-            print(f'Value of metric {k} for threshold {idx} is {v[idx]}')
+            print(f'Value of metric {k} for threshold {thresholds[idx]} is {v[idx]}')
         print(f'Function used for evaluation: {func}')
-        final_out[metric] = dict(confidence_threshold=idx, value=list_of_vals[idx])
+        final_out[metric] = dict(confidence_threshold=thresholds[idx], value=list_of_vals[idx])
 
     os.chdir(cwd)  # get back to original working directory
 
