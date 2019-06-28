@@ -31,7 +31,7 @@ def fubar_benchmark_function(thresh_linspace_div=10, iou_thresh=0.5):
         #                          path_conf['yolo_weights'],
         #                          '-thresh',
         #                          i], stdout=subprocess.PIPE)
-        stdo_blob = result.stdout.decode('utf-8')
+        # stdo_blob = result.stdout.decode('utf-8')
 
         # per-class TP, FP and NP are sorted 0 to n, where n is number of classes
         patterns = {
