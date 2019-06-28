@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 import importlib.util
 import sys
 from decouple import config
-from .models import RackLocation
+from models import RackLocation
 
 # from image_processing_new import fubar_master_function
 sys.path.append('/home/ubuntu/fubar')
