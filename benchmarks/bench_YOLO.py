@@ -63,11 +63,27 @@ class_id = 1, name = rack, ap = 80.40%           (TP = 225, FP = 23)\
 Total Detection Time: 33.000000 Seconds"
         # per-class TP, FP and NP are sorted 0 to n, where n is number of classes
 
-        # re.findall()
         for k, v in patterns.items():
             print(k)
             print(re.findall(v, result))
         results = {k: re.findall(v, result) for k, v in patterns.items()}
+
+        # convert types in the results
+        # if single element in list change to scalar
+        for k, v in results.items():
+            repl_list = []
+            if type(v) is list:
+                for i in v:
+                    try:
+                        repl_list.append(int(i))
+                    except ValueError:  # converting to int when there's a dot in a string raises a ValueError
+                        repl_list.append(float(i))
+            v = repl_list
+            if len(v) == 1:
+                results[k] = v[0]
+            else:
+                pass
+
     return results
 
 
