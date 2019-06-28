@@ -58,7 +58,7 @@ def fubar_benchmark_function(thresh_linspace_div=10,
     """
     cwd = os.getcwd()
     os.chdir(path_conf['yolo_darknet_app'])
-    thresholds = np.linspace(0, 1, thresh_linspace_div)
+    thresholds = np.linspace(0.05, 0.99, thresh_linspace_div)
 
     patterns = {
         'precision': r'(?<=precision = )\d\.\d+',
@@ -231,7 +231,8 @@ Total Detection Time: 33.000000 Seconds"
         func = optimization_dict[metric]
         idx = func(list_of_vals)
         print(f'Confidence threshold {idx} is optimal with respect to metric {metric}.')
-        print(f'Value of metric {metric} for threshold {idx} is {list_of_vals[idx]}')
+        for k, v in metrics_dict.items():
+            print(f'Value of metric {k} for threshold {idx} is {v[idx]}')
         print(f'Function used for evaluation: {func}')
         final_out[metric] = dict(confidence_threshold=idx, value=list_of_vals[idx])
 
