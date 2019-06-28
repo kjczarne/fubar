@@ -259,7 +259,7 @@ if __name__ == '__main__':
                     default=['max'])
     args = vars(ap.parse_args())
 
-    ret = fubar_benchmark_function(thresh_linspace_div=int(args['thresh']),
+    ret = fubar_benchmark_function(thresh_linspace_div=int(args['thresh_div']),
                                    iou_thresh=args['iou_thresh'],
                                    metrics=args['metrics'],
                                    optimization=args['optimization'],
