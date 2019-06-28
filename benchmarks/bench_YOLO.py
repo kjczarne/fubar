@@ -233,9 +233,9 @@ Total Detection Time: 33.000000 Seconds"
         idx = func(list_of_vals)
         print(f'Confidence threshold {thresholds[idx]} is optimal with respect to metric {metric}.')
         print(f'Value of metric {metric} for threshold {thresholds[idx]} is {list_of_vals[idx]}')
-        for k, v in metrics_dict.items():
+        for k in add_metrics:
             print('Additional selected metrics:')
-            print(f'Value of metric {k} for threshold {thresholds[idx]} is {v[idx]}')
+            print(f'Value of metric {k} for threshold {thresholds[idx]} is {runs_dict[idx][k]}')
         print(f'Function used for evaluation: {func}')
         final_out[metric] = dict(confidence_threshold=thresholds[idx], value=list_of_vals[idx])
 
