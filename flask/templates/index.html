@@ -24,7 +24,7 @@
         return (typeof window.orientation !== "undefined") || (navigator.userAgent.indexOf('IEMobile') !== -1);
     };
 
-      if ( isMobileDevice() && "geolocation" in navigator &&  {
+      if ( isMobileDevice() && "geolocation" in navigator) {
         var gps = navigator.geolocation.getCurrentPosition(function(position) {
           document.getElementById('coordinates').value = JSON.stringify(position);
 
@@ -45,7 +45,7 @@
 	document.getElementById('coordinates').value = coords
 
     }
-    
+
     console.log(coords)
 
     </script>
