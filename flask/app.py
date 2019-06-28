@@ -70,6 +70,8 @@ def upload_file():
             filename = secure_filename(file.filename)
             path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(path)
+            myvar =  request.form['coordinates']
+            print(myvar)
 #            im = Image.open(path)
             #im.save(path)
             drawpath = os.path.join(app.config['UPLOAD_FOLDER'], 'draw.jpg')

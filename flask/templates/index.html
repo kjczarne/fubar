@@ -23,11 +23,11 @@
         var gps = navigator.geolocation.getCurrentPosition(function(position) {
           document.getElementById('coordinates').value = JSON.stringify(position);
 		
-		lat = console.log(position.coords.latitude)
-	        lng = console.log(position.coords.longitude)
-                var coords = [lng, lat]
-
-		document.getElementById('coordinates').value = JSON.stringify(coords);
+		lat = position.coords.latitude
+	        lng = position.coords.longitude
+                var coords = [lng, lat]                
+                console.log(coords)                 
+         	document.getElementById('coordinates').value = JSON.stringify(coords);
         
            
           //   document.write(key + ’: ‘ + position.coords[key]);
