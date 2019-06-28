@@ -77,9 +77,10 @@ Total Detection Time: 33.000000 Seconds"
                     try:
                         repl_list.append(int(i))
                     except ValueError:  # converting to int when there's a dot in a string raises a ValueError
-                        repl_list.append(float(i))
-                    except ValueError:
-                        repl_list.append(i)  # finally it can be just a string
+                        try:
+                            repl_list.append(float(i))
+                        except ValueError:
+                            repl_list.append(i)  # finally it can be just a string
             v = repl_list
             if len(v) == 1:
                 results[k] = v[0]
