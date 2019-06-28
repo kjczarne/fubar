@@ -1,4 +1,5 @@
 from cnn_toolkit import file_train_test_split
+from decouple import config
 
 # ------------------------------
 # YOLO-CONFIG FOR MASTER SCRIPT |
@@ -54,6 +55,20 @@ paths = file_train_test_split(path_to_archive, file_formats, ignored_directories
 # -----------------------------------
 # HYPERPARAMETERS FOR THE CLASSIFIER |
 # -----------------------------------
+
+POSTGRES = {
+    'user': config('DATABASE_USER'),
+    'pw': config('DATABASE_PASSWORD'),
+    'db': config('DATABASE_NAME'),
+    'host': config('DATABASE_HOST'),
+    'port': '5432',
+}
+
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://%(user)s:\
+%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
+
+
 hprm = dict(
     INPUT_H=299,
     INPUT_W=299,
@@ -64,4 +79,3 @@ hprm = dict(
     EARLY_STOPPING_DELTA=0.001
 )
 # ---------------------------------------------------------------------------------------------------------------------
-

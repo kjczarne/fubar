@@ -1,11 +1,13 @@
 import os
 import re
+from flask_sqlalchemy import SQLAlchemy
 import json
 from flask import Flask, jsonify, flash, request, redirect, url_for, render_template, send_from_directory
 from PIL import Image
 from werkzeug.utils import secure_filename
 import importlib.util
 import sys
+
 # from image_processing_new import fubar_master_function
 sys.path.append('/home/ubuntu/fubar')
 from image_processing_new import fubar_master_function
@@ -48,8 +50,8 @@ def upload_file():
             filename = secure_filename(file.filename)
             path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(path)
-            im = Image.open(path)
-            im.save(path)
+#            im = Image.open(path)
+            #im.save(path)
             drawpath = os.path.join(app.config['UPLOAD_FOLDER'], 'draw.jpg')
             global pred
             pred = fubar_master_function(path, outfile_draw=drawpath)
