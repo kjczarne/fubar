@@ -73,12 +73,12 @@ def upload_file():
             myvar =  request.form['coordinates']
             myvar = json.loads(myvar)
             print(myvar)
-           if myvar != 0:
-               lng = myvar[0]
-               lat = myvar[1]
+            if myvar != 0:
+                lng = myvar[0]
+                lat = myvar[1]
                 print("lng: " + str(myvar[0]) +  "lat: " + str(myvar[1]))
-           else:
-                print("photo came from desktop")
+            else:
+                 print("photo came from desktop")
 #           im = Image.open(path)
             #im.save(path)
             drawpath = os.path.join(app.config['UPLOAD_FOLDER'], 'draw.jpg')
