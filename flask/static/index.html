@@ -8,10 +8,10 @@
   <link href='https://api.mapbox.com/mapbox-assembly/v0.23.2/assembly.min.css' rel='stylesheet'>
   <script async defer src='https://api.mapbox.com/mapbox-assembly/v0.23.2/assembly.js'></script>
  <style>
-  body { 
+  body {
 background-image: url(uber_jump.svg);
 }
-  </style> 
+  </style>
 </head>
 <body>
 <div class="prose">
@@ -24,7 +24,7 @@ background-image: url(uber_jump.svg);
       if ("geolocation" in navigator) {
         var gps = navigator.geolocation.getCurrentPosition(function(position) {
           for (key in position.coords) {
-
+            
 	      console.log(key)
 //            document.write(key + ’: ‘ + position.coords[key]);
 //            document.write(‘ < br > ‘);
@@ -35,6 +35,3 @@ background-image: url(uber_jump.svg);
     </script>
 </body>
 </html>
-
-
-

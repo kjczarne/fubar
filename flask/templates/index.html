@@ -22,9 +22,12 @@
       if ("geolocation" in navigator) {
         var gps = navigator.geolocation.getCurrentPosition(function(position) {
           document.getElementById('coordinates').value = JSON.stringify(position);
-          for (key in position.coords) {
+          for (x in position.coords) {
 
-	      console.log(key)
+          key = Object.keys(x)[0];
+          console.log(x[key]);
+
+
 //            document.write(key + ’: ‘ + position.coords[key]);
 //            document.write(‘ < br > ‘);
           }
