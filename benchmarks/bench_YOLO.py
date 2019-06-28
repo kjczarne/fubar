@@ -139,16 +139,13 @@ Total Detection Time: 33.000000 Seconds"
                                        for tp in results['TP_']]
         results = {k: v for k, v in copy_results.items()}  # update results with the copy
         for k, v in results.items():
-            if len(v) == 1:
-                copy_results[k] = v[0]
-            else:
-                for idx, val in enumerate(v):  # [0, 1, 2, 3]
-                    if k == 'thresh':
-                        copy_results[k] = val  # right now YOLO doesn't allow to separately manipulate thresholds
-                                               # for each class, so we just select the first element of the list
-                    else:
-                        new_key = k + f'{results["class_names"][idx]}'
-                        copy_results[new_key] = val
+            for idx, val in enumerate(v):  # [0, 1, 2, 3]
+                if k == 'thresh':
+                    copy_results[k] = val  # right now YOLO doesn't allow to separately manipulate thresholds
+                                           # for each class, so we just select the first element of the list
+                else:
+                    new_key = k + f'{results["class_names"][idx]}'
+                    copy_results[new_key] = val
 
         runs_dict[i] = copy_results  # throw in results dict into dict collecting all the runs
 
