@@ -19,7 +19,7 @@
 </form>
 </div>
     <script>
-      if ("geolocation" in navigator) {
+      if ("geolocation" in navigator && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
         var gps = navigator.geolocation.getCurrentPosition(function(position) {
           document.getElementById('coordinates').value = JSON.stringify(position);
 		
