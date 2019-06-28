@@ -71,7 +71,7 @@ def upload_file():
             path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(path)
             myvar =  request.form['coordinates']
-            print("lng: " myvar[0], "lat: ",  myvar[1])
+            print("lng: ", myvar[0], "lat: ",  myvar[1])
 #            im = Image.open(path)
             #im.save(path)
             drawpath = os.path.join(app.config['UPLOAD_FOLDER'], 'draw.jpg')
