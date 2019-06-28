@@ -32,6 +32,7 @@ def fubar_benchmark_function(thresh_linspace_div=10,
                              iou_thresh=0.5,
                              metrics=['map'],
                              optimization=['max'],
+                             add_metrics=['recall', 'precision', 'TP_', 'FP_', 'FN_', ],
                              return_val=None):
     """
     benchmarking function
@@ -231,7 +232,9 @@ Total Detection Time: 33.000000 Seconds"
         func = optimization_dict[metric]
         idx = func(list_of_vals)
         print(f'Confidence threshold {thresholds[idx]} is optimal with respect to metric {metric}.')
+        print(f'Value of metric {metric} for threshold {thresholds[idx]} is {list_of_vals[idx]}')
         for k, v in metrics_dict.items():
+            print('Additional selected metrics:')
             print(f'Value of metric {k} for threshold {thresholds[idx]} is {v[idx]}')
         print(f'Function used for evaluation: {func}')
         final_out[metric] = dict(confidence_threshold=thresholds[idx], value=list_of_vals[idx])
@@ -258,11 +261,15 @@ if __name__ == '__main__':
     ap.add_argument('-o', '--optimization', nargs='+',
                     help='function names to be used for optimization, usually min/max',
                     default=['max'])
+    ap.add_argument('-a', '--add_metrics', nargs='+',
+                    help='additional metrics to display',
+                    default=['recall', 'precision', 'TP_', 'FP_', 'FN_', ])
     args = vars(ap.parse_args())
 
     ret = fubar_benchmark_function(thresh_linspace_div=int(args['thresh_div']),
                                    iou_thresh=args['iou_thresh'],
                                    metrics=args['metrics'],
                                    optimization=args['optimization'],
+                                   add_metrics=args['add_metrics'],
                                    return_val=None)
     print(ret)
