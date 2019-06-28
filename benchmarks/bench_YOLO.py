@@ -130,13 +130,16 @@ Total Detection Time: 33.000000 Seconds"
             else:
                 copy_results[k] = v
 
-            # FN = all - TP
-            # Recall = TP / (TP + FN)
-            # Precision = TP / (TP + FP)
-        copy_results['FN_'] = [int(alles) - int(tp) for alles in category_counts for tp in results['TP_']]
-        copy_results['recall_'] = [(int(tp) / int(alles)) for alles in category_counts for tp in results['TP_']]
-        copy_results['precision_'] = [(int(tp) / (int(tp) + int(fp))) for fp in results['FP_']
-                                       for tp in results['TP_']]
+        # FN = all - TP
+        # Recall = TP / (TP + FN)
+        # Precision = TP / (TP + FP)
+        np_all = np.array(category_counts)
+        np_fn = np_all - np.array(results['TP_'])
+        np_tp = np.array(copy_results['TP_'])
+        np_fp = np.array(copy_results['FP_'])
+        copy_results['FN_'] = list(np_fn)
+        copy_results['recall_'] = list(np_tp/np_all)
+        copy_results['precision_'] = list(np_tp/(np_tp + np_fp))
         results = {k: v for k, v in copy_results.items()}  # update results with the copy
         for k, v in results.items():
             if hasattr(v, '__iter__'):
@@ -242,7 +245,7 @@ Total Detection Time: 33.000000 Seconds"
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument("-t", "--thresh",
+    ap.add_argument("-t", "--thresh_div",
                     help="confidence threshold bucket size, default is 10",
                     default=10)
     ap.add_argument("-i", "--iou_thresh",
@@ -256,7 +259,7 @@ if __name__ == '__main__':
                     default=['max'])
     args = vars(ap.parse_args())
 
-    ret = fubar_benchmark_function(thresh_linspace_div=args['thresh'],
+    ret = fubar_benchmark_function(thresh_linspace_div=int(args['thresh']),
                                    iou_thresh=args['iou_thresh'],
                                    metrics=args['metrics'],
                                    optimization=args['optimization'],
