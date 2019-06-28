@@ -8,7 +8,9 @@ from werkzeug.utils import secure_filename
 import importlib.util
 import sys
 from decouple import config
-from models import RackLocation
+from models import RackLocation, Base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 # from image_processing_new import fubar_master_function
 sys.path.append('/home/ubuntu/fubar')
@@ -33,9 +35,10 @@ app.secret_key = b'-I\xd9I\xa0\xe7R\x83Q\xc0\xce\xf2\xe4\xc8\x020'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://%(user)s:\
 %(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
 
-db = SQLAlchemy(app)
-db.create_all()
-db.session.commit()
+engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+Session = sessionmaker(bind=engine)
+session = Session()
+Base.metadata.create_all(engine)
 
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg',])
 
