@@ -78,7 +78,7 @@ def upload_file():
                 lat = myvar[1]
                 print("lng: " + str(myvar[0]) +  "lat: " + str(myvar[1]))
             else:
-                 print("photo came from desktop")
+                print("photo came from desktop")
 #           im = Image.open(path)
             #im.save(path)
             drawpath = os.path.join(app.config['UPLOAD_FOLDER'], 'draw.jpg')
@@ -87,15 +87,16 @@ def upload_file():
             global message
             message = 'were detected'
             if myvar != 0:
-                loc=F"POINT({lng}, {lat})"
                 rack_location = RackLocation(
-                location=loc, numracks=0)
+                location='POINT(-122.4111 37.6305)', numracks=0)
                 session.add(rack_location)
                 session.commit()
                 session.refresh(rack_location)
             print("id: ", rack_location.id)
             objects = pred[1]
             d = {x:objects.count(x) for x in objects}
+            if 'rack' in d:
+                print(d['rack'])
             if objects:
                 message = 'were detected'
                 classes = 0
