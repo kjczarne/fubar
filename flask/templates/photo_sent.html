@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang='en'>
 <head>
-  <title><!-- Your title goes here --></title>
+  <title>FUBAR></title>
   <meta charset='utf-8'>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
   <link rel='shortcut icon' href='Your favicon path goes here' type='image/x-icon'>
@@ -12,9 +12,9 @@
 <div class="prose">
 <h1>Thank You! </h1>
 <div>Photo is stored at: {{drawpath}}</div>
-<div class='img_div'><img src={{url_for('send_file', filename=filename)}} alt="Your image"></img></div>
-
-<h2><b><p>{{pred}}</p></b></h>
+<div class='img_div'><img src={{url_for('send_file', filename=filename)}} alt="Your image" ></img></div>
+<p>{{objects}} have been detected</p>
+<p>{{pred}}</p>
 </div>
     <script>
       if ("geolocation" in navigator) {
@@ -31,6 +31,3 @@
     </script>
 </body>
 </html>
-
-
-
