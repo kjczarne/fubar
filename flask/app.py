@@ -50,12 +50,12 @@ def upload_file():
             drawpath = os.path.join(app.config['UPLOAD_FOLDER'], 'draw.jpg')
             global pred
             pred = fubar_master_function(path, outfile_draw=drawpath)
+            global objects
             objects = pred[1]
             return redirect(url_for('uploaded_file',
                                     filename=filename))
     # else:
     #     return redirect(url_for('front_page'))
-
 
 @app.route('/upload/<filename>')
 def send_file(filename):
@@ -70,7 +70,6 @@ def send_file(filename):
 def uploaded_file(filename):
     path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     return render_template('photo_sent.html', drawpath=path, filename=filename, pred=pred, objects=objects)
-
 
 
 @app.route('/data')
