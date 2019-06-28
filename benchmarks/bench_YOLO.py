@@ -12,6 +12,22 @@ sys.path.append('/home/ubuntu/fubar')
 from fubar_CONF import label_dict, labels_of_images_to_be_cropped, tf_s_conf, hprm, path_conf
 
 
+def count(directory):
+    text_files = glob.glob(directory+'/*.txt')
+    dct = dict()
+    for i in text_files:
+        with open(i, 'r') as f:
+            contents = f.read()
+        lines = contents.split('\n')
+        for n in lines:
+            try:
+                dct[n.split(' ')[0]].append(i)
+            except KeyError:
+                dct[n.split(' ')[0]] = [i]
+    out_dict = {k: len(v) for k, v in dct.items()}
+    return out_dict
+
+
 def fubar_benchmark_function(thresh_linspace_div=10,
                              iou_thresh=0.5,
                              metrics=['map'],
@@ -60,32 +76,36 @@ def fubar_benchmark_function(thresh_linspace_div=10,
         'map': r'(?<=\(mAP@\d.\d\d\) = )\d\.\d+'
     }
 
+    category_counts_dct = count(path_conf['yolo_test_set'])
+    category_counts = [category_counts_dct[i] for i in sorted(category_counts_dct.keys())]
+    # get a sorted list of total detections for each category
+
     runs_dict = {}
 
     for i in thresholds:
-        result = subprocess.run(['./darknet',
-                                 'detector',
-                                 'map',
-                                 path_conf['yolo_obj.data'],
-                                 path_conf['yolo_cfg'],
-                                 path_conf['yolo_weights'],
-                                 '-thresh',
-                                 str(i),
-                                 '-iou-thresh',
-                                 str(iou_thresh)], stdout=subprocess.PIPE)
-        result = result.stdout.decode('utf-8')
-#         result = "calculation mAP (mean average precision)...\
-# 408\
-#  detections_count = 1276, unique_truth_count = 701\
-# class_id = 0, name = lock, ap = 86.82%           (TP = 279, FP = 9)\
-# class_id = 1, name = rack, ap = 80.40%           (TP = 225, FP = 23)\
-# \
-#  for thresh = 0.50, precision = 0.94, recall = 0.72, F1-score = 0.81\
-#  for thresh = 0.50, TP = 504, FP = 32, FN = 197, average IoU = 70.68 %\
-# \
-#  IoU threshold = 50 %, used Area-Under-Curve for each unique Recall\
-#  mean average precision (mAP@0.50) = 0.836113, or 83.61 %\
-# Total Detection Time: 33.000000 Seconds"
+        # result = subprocess.run(['./darknet',
+        #                          'detector',
+        #                          'map',
+        #                          path_conf['yolo_obj.data'],
+        #                          path_conf['yolo_cfg'],
+        #                          path_conf['yolo_weights'],
+        #                          '-thresh',
+        #                          str(i),
+        #                          '-iou-thresh',
+        #                          str(iou_thresh)], stdout=subprocess.PIPE)
+        # result = result.stdout.decode('utf-8')
+        result = "calculation mAP (mean average precision)...\
+408\
+ detections_count = 1276, unique_truth_count = 701\
+class_id = 0, name = lock, ap = 86.82%           (TP = 279, FP = 9)\
+class_id = 1, name = rack, ap = 80.40%           (TP = 225, FP = 23)\
+\
+ for thresh = 0.50, precision = 0.94, recall = 0.72, F1-score = 0.81\
+ for thresh = 0.50, TP = 504, FP = 32, FN = 197, average IoU = 70.68 %\
+\
+ IoU threshold = 50 %, used Area-Under-Curve for each unique Recall\
+ mean average precision (mAP@0.50) = 0.836113, or 83.61 %\
+Total Detection Time: 33.000000 Seconds"
         # per-class TP, FP and NP are sorted 0 to n, where n is number of classes
 
         results = {k: re.findall(v, result) for k, v in patterns.items()}
@@ -105,10 +125,18 @@ def fubar_benchmark_function(thresh_linspace_div=10,
                         except ValueError:
                             repl_list.append(j)  # finally it can be just a string
             v = repl_list
+
+            # FN = all - TP
+            # Recall = TP / (TP + FN)
+            # Precision = TP / (TP + FP)
+            copy_results['FN_'] = [alles - tp for alles in category_counts for tp in results['TP_']]
+            copy_results['recall_'] = [(tp / alles) for alles in category_counts for tp in results['TP_']]
+            copy_results['precision_'] = [(tp / (tp + fp)) for fp in results['FP_'] for tp in results['TP_']]
+
             if len(v) == 1:
                 copy_results[k] = v[0]
             else:
-                for idx, val in enumerate(v):
+                for idx, val in enumerate(v):  # [0, 1, 2, 3]
                     if k == 'thresh':
                         copy_results[k] = val  # right now YOLO doesn't allow to separately manipulate thresholds
                                                # for each class, so we just select the first element of the list
@@ -132,11 +160,11 @@ def fubar_benchmark_function(thresh_linspace_div=10,
             'ap_lock': 86.82
             'ap_rack': 80.4, 
             'iou_thresh': 50, 
-            'thresh': [0.5, 0.5],
+            'thresh': 0.5,
             'class_names': ['lock', 'rack'], 
             'map': 0.836113}
         }"""
-
+    print(runs_dict)
     metrics_dict = {k: [] for k in metrics}  # initialize dict with empty lists for metrics
     for run, result_dict in runs_dict.items():
         for k, v in result_dict.items():
