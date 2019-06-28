@@ -77,7 +77,7 @@ def fubar_benchmark_function(thresh_linspace_div=10,
     }
 
     category_counts_dct = count(path_conf['yolo_test_set'])
-    category_counts = [category_counts_dct[i] for i in sorted(category_counts_dct.keys())]
+    category_counts = [int(category_counts_dct[i]) for i in sorted(category_counts_dct.keys())]
     # get a sorted list of total detections for each category
 
     runs_dict = {}
