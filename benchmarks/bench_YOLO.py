@@ -134,7 +134,7 @@ Total Detection Time: 33.000000 Seconds"
         # Recall = TP / (TP + FN)
         # Precision = TP / (TP + FP)
         np_all = np.array(category_counts)
-        np_fn = np_all - np.array(results['TP_'])
+        np_fn = np_all - np.array(copy_results['TP_'])
         np_tp = np.array(copy_results['TP_'])
         np_fp = np.array(copy_results['FP_'])
         copy_results['FN_'] = list(np_fn)
