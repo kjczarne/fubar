@@ -64,7 +64,7 @@ Total Detection Time: 33.000000 Seconds"
         # per-class TP, FP and NP are sorted 0 to n, where n is number of classes
 
         # re.findall()
-        results = {k: re.findall(v, result) for k, v in patterns.items()}
+        results = {k: re.findall(v, result, flags=re.MULTILINE) for k, v in patterns.items()}
     return results
 
 
