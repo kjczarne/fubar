@@ -72,7 +72,7 @@ def upload_file():
             file.save(path)
             myvar =  request.form['coordinates']
             if myvar != 0:
-                print("lng: ", myvar[0], "lat: ",  myvar[1])
+                print("lng: " + str(myvar[0]) +  "lat: " + str(myvar[1]))
             else:
                 "photo came from desktop"
 #            im = Image.open(path)
