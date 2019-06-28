@@ -53,8 +53,8 @@ def upload_file():
             pred = fubar_master_function(path, outfile_draw=drawpath)
             global message
             message = 'were detected'
-            d = {x:objects.count(x) for x in objects}
             objects = pred[1]
+            d = {x:objects.count(x) for x in objects}
             if objects:
                 message = 'were detected'
                 classes = 0
