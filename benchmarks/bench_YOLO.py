@@ -110,8 +110,8 @@ def fubar_benchmark_function(thresh_linspace_div=10,
             else:
                 for idx, val in enumerate(v):
                     if k == 'thresh':
-                        copy_results[k] = val[0]  # right now YOLO doesn't allow to separately manipulate thresholds
-                                             # for each class, so we just select the first element of the list
+                        copy_results[k] = val  # right now YOLO doesn't allow to separately manipulate thresholds
+                                               # for each class, so we just select the first element of the list
                     else:
                         new_key = k + f'_{results["class_names"][idx]}'
                         copy_results[new_key] = val
