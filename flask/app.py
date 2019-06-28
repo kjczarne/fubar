@@ -89,7 +89,7 @@ def upload_file():
             if myvar != 0:
                 loc=F"POINT({lng}, {lat})"
                 rack_location = RackLocation(
-                location='loc, numracks=0)
+                location=loc, numracks=0)
                 session.add(rack_location)
                 session.commit()
                 session.refresh(rack_location)
