@@ -25,18 +25,18 @@ def fubar_benchmark_function(thresh_linspace_div=10, iou_thresh=0.5):
 
     patterns = {
         'precision': r'(?<=precision = )\d\.\d+',
-        'recall': r'(?<=recall = )\d\.\d+',
-        'f1': r'(?<=F1-score = )\d\.\d+',
-        'TP': r'(?<=[^\(]TP = )\d+',
-        'FP': r'(?<=FP = )\d+(?<=,)',
-        'FN': r'(?<=[^\(]FN = )\d+',
-        'TP_per_class': r'(?<=\(TP = )\d+',
-        'FP_per_class': r'(?<=FP = )\d+(?=\))',
-        'ap_per_class': r'(?<=ap = )\d+\.\d+',
-        'iou_thresh': r'(?<=IoU threshold = )\d+',
-        'thresh': r'(?<=thresh = )\d+\.\d+',
-        'class_names': r'(?<=name = )\w+',
-        'map': r'(?<=\(mAP@\d\.\d+\) = )\d\.\d+'
+        # 'recall': r'(?<=recall = )\d\.\d+',
+        # 'f1': r'(?<=F1-score = )\d\.\d+',
+        # 'TP': r'(?<=[^\(]TP = )\d+',
+        # 'FP': r'(?<=FP = )\d+(?<=,)',
+        # 'FN': r'(?<=[^\(]FN = )\d+',
+        # 'TP_per_class': r'(?<=\(TP = )\d+',
+        # 'FP_per_class': r'(?<=FP = )\d+(?=\))',
+        # 'ap_per_class': r'(?<=ap = )\d+\.\d+',
+        # 'iou_thresh': r'(?<=IoU threshold = )\d+',
+        # 'thresh': r'(?<=thresh = )\d+\.\d+',
+        # 'class_names': r'(?<=name = )\w+',
+        # 'map': r'(?<=\(mAP@\d\.\d+\) = )\d\.\d+'
     }
 
     for i in thresholds:
@@ -64,7 +64,7 @@ Total Detection Time: 33.000000 Seconds"
         # per-class TP, FP and NP are sorted 0 to n, where n is number of classes
 
         # re.findall()
-        results = {k: re.findall(v, result, flags=re.MULTILINE) for k, v in patterns.items()}
+        results = {k: re.findall(v, result) for k, v in patterns.items()}
     return results
 
 
