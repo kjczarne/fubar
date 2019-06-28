@@ -25,7 +25,6 @@ POSTGRES = {
 }
 
 
-
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -33,6 +32,9 @@ app.secret_key = b'-I\xd9I\xa0\xe7R\x83Q\xc0\xce\xf2\xe4\xc8\x020'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://%(user)s:\
 %(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
 
+db = SQLAlchemy(app)
+db.create_all()
+db.session.commit()
 
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg',])
 
