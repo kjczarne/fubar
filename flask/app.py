@@ -77,8 +77,11 @@ def upload_file():
             else:
                 message = 'Nothing was detected, please try again'
 
+            global ojbs
+            ojbs = len(objs)
+
             return redirect(url_for('uploaded_file',
-                                    filename=filename, objs=len(objects)))
+                                    filename=filename))
     # else:
     #     return redirect(url_for('front_page'))
 
@@ -92,11 +95,11 @@ def send_file(filename):
     #         )
 
 @app.route('/show/<filename>')
-def uploaded_file(filename, objs):
-    objs = objs
+def uploaded_file(filename):
     path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     drawpath = os.path.join(app.config['UPLOAD_FOLDER'], 'draw.jpg')
-    return render_template('photo_sent.html', path=path, drawpath=drawpath, filename=filename, pred=pred, message=message)
+    return render_template('photo_sent.html', path=path, drawpath=drawpath, objs=ojbs, filename=filename, pred=pred, message=message)
+
 
 @app.route('/data')
 def names():
