@@ -92,7 +92,7 @@ def fubar_benchmark_function(thresh_linspace_div=10,
 
         # convert types in the results
         # if single element in list change to scalar
-        copy_results = results
+        copy_results = {k: v for k, v in results.items()}
         for k, v in results.items():
             repl_list = []
             if type(v) is list:
