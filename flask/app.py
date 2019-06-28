@@ -1,5 +1,6 @@
 import os
 import re
+import json
 from flask import Flask, jsonify, flash, request, redirect, url_for, render_template, send_from_directory
 from PIL import Image
 from werkzeug.utils import secure_filename
@@ -52,6 +53,11 @@ def upload_file():
             pred = fubar_master_function(path, outfile_draw=drawpath)
             global objects
             objects = pred[1]
+            if objects:
+                objects = json.dumps(objects)
+            else:
+                objects = 'Nothing was detected, please try again'
+
             return redirect(url_for('uploaded_file',
                                     filename=filename))
     # else:
