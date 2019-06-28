@@ -51,12 +51,24 @@ def upload_file():
             drawpath = os.path.join(app.config['UPLOAD_FOLDER'], 'draw.jpg')
             global pred
             pred = fubar_master_function(path, outfile_draw=drawpath)
-            global objects
+            global message
             objects = pred[1]
+
             if objects:
-                objects = json.dumps(objects)
+                message = 'were detected'
+                d = {x:objects.count(x) for x in objects}
+                if d:
+                    for i in d:
+                        if d[i] == 1:
+                           detected = str(d[i]) + ' ' + i
+                           message = ' '.join((detected, message))
+
+                        else:
+                           detected = str(d[i]) + ' ' + i + 's'
+                           message = ' '.join((detected, message))
+
             else:
-                objects = 'Nothing was detected, please try again'
+                message = 'Nothing was detected, please try again'
 
             return redirect(url_for('uploaded_file',
                                     filename=filename))
