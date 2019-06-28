@@ -220,5 +220,10 @@ if __name__ == '__main__':
     ap.add_argument('-o', '--optimization', nargs='+',
                     help='function names to be used for optimization, usually min/max')
     args = vars(ap.parse_args())
-    ret = fubar_benchmark_function(args['thresh'], args['iou_thresh'])
+
+    ret = fubar_benchmark_function(thresh_linspace_div=args['thresh'],
+                                   iou_thresh=args['iou_thresh'],
+                                   metrics=args['metrics'],
+                                   optimization=args['optimization'],
+                                   return_val=None)
     print(ret)
