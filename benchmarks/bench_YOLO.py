@@ -85,7 +85,7 @@ Total Detection Time: 33.000000 Seconds"
             if len(v) == 1:
                 results[k] = v[0]
             else:
-                pass
+                results[k] = v
 
     return results
 
