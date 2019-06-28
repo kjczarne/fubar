@@ -129,9 +129,10 @@ Total Detection Time: 33.000000 Seconds"
             # FN = all - TP
             # Recall = TP / (TP + FN)
             # Precision = TP / (TP + FP)
-            copy_results['FN_'] = [int(alles) - tp for alles in category_counts for tp in results['TP_']]
-            copy_results['recall_'] = [(tp / int(alles)) for alles in category_counts for tp in results['TP_']]
-            copy_results['precision_'] = [(tp / (tp + fp)) for fp in results['FP_'] for tp in results['TP_']]
+            copy_results['FN_'] = [int(alles) - int(tp) for alles in category_counts for tp in results['TP_']]
+            copy_results['recall_'] = [(int(tp) / int(alles)) for alles in category_counts for tp in results['TP_']]
+            copy_results['precision_'] = [(int(tp) / (int(tp) + int(fp))) for fp in results['FP_']\
+                                          for tp in results['TP_']]
 
             if len(v) == 1:
                 copy_results[k] = v[0]
