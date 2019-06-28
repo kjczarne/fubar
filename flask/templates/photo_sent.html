@@ -22,14 +22,14 @@
 <h1>Thank You! </h1>
 <div>Photo is stored at: {{drawpath}}</div>
 <div class='img_div'><img src={{url_for('send_file', filename=filename)}} alt="Your image" ></img></div>
-<div id='img_draw'><img src='/home/ubuntu/fubar/flask/uploads/draw.jpg' alt="Objects" ></img></div>
+<div id='img_draw'><img src='uploads/draw.jpg' alt="Objects" ></img></div>
 <h2><p>{{message}}</p><h2 align="right">
 <p>{{pred}}</p>
 </div>
     <script>
-    
+
     var image = document.getElementById("img_draw");
-      if {{objs}} {
+      if {{objs}} > 0 {
         image.style.display = 'block';
       }
 
