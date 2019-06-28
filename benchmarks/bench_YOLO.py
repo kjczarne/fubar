@@ -92,6 +92,7 @@ def fubar_benchmark_function(thresh_linspace_div=10,
 
         # convert types in the results
         # if single element in list change to scalar
+        copy_results = results
         for k, v in results.items():
             repl_list = []
             if type(v) is list:
@@ -105,17 +106,17 @@ def fubar_benchmark_function(thresh_linspace_div=10,
                             repl_list.append(j)  # finally it can be just a string
             v = repl_list
             if len(v) == 1:
-                results[k] = v[0]
+                copy_results[k] = v[0]
             else:
                 for idx, val in enumerate(v):
                     if k == 'thresh':
-                        results[k] = val[0]  # right now YOLO doesn't allow to separately manipulate thresholds
+                        copy_results[k] = val[0]  # right now YOLO doesn't allow to separately manipulate thresholds
                                              # for each class, so we just select the first element of the list
                     else:
                         new_key = k + f'_{results["class_names"][idx]}'
-                        results[new_key] = val
+                        copy_results[new_key] = val
 
-        runs_dict[i] = results  # throw in results dict into dict collecting all the runs
+        runs_dict[i] = copy_results  # throw in results dict into dict collecting all the runs
 
     """{0: 
             {'precision': 0.94, 
