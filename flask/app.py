@@ -87,7 +87,7 @@ def send_file(filename):
 @app.route('/show/<filename>')
 def uploaded_file(filename):
     path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    return render_template('photo_sent.html', drawpath=path, filename=filename, pred=pred, objects=objects)
+    return render_template('photo_sent.html', drawpath=path, filename=filename, pred=pred, message=message)
 
 
 @app.route('/data')
