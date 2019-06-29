@@ -464,36 +464,53 @@ def serialize_model(model_file, model_version='1', weights_file=None):
 # --------------------------------------
 
 
-def true_vs_predicted(model, positive_class, negative_class, base_path, accepted_file_formats):
+def true_vs_predicted(model,
+                      positive_class,
+                      negative_class,
+                      accepted_file_formats,
+                      base_path=None,
+                      tts=None,
+                      tts_label_col='y_col',
+                      tts_path_col='x_col'):
     """
     Function for getting bulk predictions of binary classes.
     :param model: Model or Sequential instance implementing predict method
-    :param positive_class: string, folder name of class defined as 1
-    :param negative_class: string, folder name of class defined as 0
+    :param positive_class: string, folder name or tts column name of class defined as 1
+    :param negative_class: string, folder name or tts column name of class defined as 0
     :param base_path: string, base path to the folder containing category subfolders
-    :param accepted_file_formats: list, glob-like file formats e.g. ['*.jpg']
+    :param accepted_file_formats: list, glob-like file formats e.g. ['*.jpg'], ignored when tts used
+    :param tts: pd.DataFrame as returned by file_train_test_split_function
+    :param tts_label_col: tts DataFrame label column name
+    :param tts_path_col: tts DataFrame path column name
     :return: 4-tuple of np.arrays containing pred values of class 1, true values of class 1,
              same respectively for class 0
     """
-    preds=np.empty((1,0))
-    glob_list = []
+    positive_class_paths = []
+    negative_class_paths =[]
     
     positive_preds = []
     negative_preds = []
-    
-    for i in accepted_file_formats:
-        glob_list += glob.glob(base_path+'/'+positive_class+'/'+i)
-    for i in glob_list:
+    if (base_path is None) and (tts is None):
+        raise ValueError("base_path or tts has to be set")
+    elif (base_path is not None) and (tts is not None):
+        raise ValueError("cannot use both base path and tts DataFrame")
+    elif base_path is not None:
+        for i in accepted_file_formats:
+            positive_class_paths += glob.glob(base_path + '/' + positive_class + '/' + i)
+            negative_class_paths += glob.glob(base_path+'/'+negative_class+'/'+i)
+    elif tts is not None:
+        positive_class_paths = list(tts[tts[tts_label_col] == positive_class][tts_path_col])
+        negative_class_paths = list(tts[tts[tts_label_col] == negative_class][tts_path_col])
+
+    preds = np.empty((1, 0))
+    for i in positive_class_paths:
         im = Image.open(i)
         preds = np.append(preds, model.predict((np.expand_dims(np.array(im.resize((299,299))), axis=0))/255), axis=1)
     positive_preds = preds.squeeze()
     positive_ground_truth = np.array([1 for i in preds.squeeze()])
     
     preds=np.empty((1,0))
-    glob_list = []
-    for i in accepted_file_formats:
-        glob_list += glob.glob(base_path+'/'+negative_class+'/'+i)
-    for i in glob_list:
+    for i in negative_class_paths:
         im = Image.open(i)
         preds = np.append(preds, model.predict((np.expand_dims(np.array(im.resize((299,299))), axis=0))/255), axis=1)
     negative_preds = preds.squeeze()
@@ -501,10 +518,24 @@ def true_vs_predicted(model, positive_class, negative_class, base_path, accepted
     return positive_preds, positive_ground_truth, negative_preds, negative_ground_truth
 
 
-def contiguous_true_vs_predicted(model, positive_class, negative_class, base_path, accepted_file_formats):
+def contiguous_true_vs_predicted(model,
+                                 positive_class,
+                                 negative_class,
+                                 accepted_file_formats,
+                                 base_path=None,
+                                 tts=None,
+                                 tts_label_col='y_col',
+                                 tts_path_col='x_col'):
     """
     Simple wrapper for true_vs_predicted to get contiguous np arrays of true vs. predicted labels.
     :return: 2-tuple of np.arrays: contigous true values, contiguous predicted values
     """
-    ppr, pgr, npr, ngr = true_vs_predicted(model, positive_class, negative_class, base_path, accepted_file_formats)
+    ppr, pgr, npr, ngr = true_vs_predicted(model,
+                                           positive_class,
+                                           negative_class,
+                                           accepted_file_formats,
+                                           base_path,
+                                           tts,
+                                           tts_label_col,
+                                           tts_path_col)
     return np.concatenate((pgr, ngr)), np.concatenate((ppr, npr))

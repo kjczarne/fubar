@@ -1,5 +1,4 @@
-from cnn_toolkit import file_train_test_split
-from decouple import config
+from cnn_toolkit import file_train_test_split, filepattern
 
 # ------------------------------
 # YOLO-CONFIG FOR MASTER SCRIPT |
@@ -49,6 +48,8 @@ file_formats = ['*.jpg', '*.jpeg', '*.png']
 path_to_archive = path_conf['cropped_images_for_training']
 paths = file_train_test_split(path_to_archive, file_formats, ignored_directories=['inference'])
 # we use default 80/20 split
+paths[1].to_csv(filepattern('test', '.csv'), index=False)
+paths[0].to_csv(filepattern('train', '.csv'), index=False)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
