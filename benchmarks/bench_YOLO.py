@@ -29,6 +29,7 @@ def count(directory):
 
 
 def fubar_benchmark_function(thresh_linspace_div=10,
+                             iou_thresh_linspace_div=10,
                              iou_thresh=0.5,
                              metrics=('map'),
                              optimization=('max'),
@@ -60,6 +61,7 @@ def fubar_benchmark_function(thresh_linspace_div=10,
     cwd = os.getcwd()
     os.chdir(path_conf['yolo_darknet_app'])
     thresholds = np.linspace(0.05, 0.99, thresh_linspace_div)
+    iou_thresholds = np.linspace(0.05, 0.99, iou_thresh_linspace_div)
     print(f"Searching through thresholds: {thresholds}")
     patterns = {
         'precision': r'(?<=precision = )\d\.\d+',
@@ -82,87 +84,84 @@ def fubar_benchmark_function(thresh_linspace_div=10,
     # get a sorted list of total detections for each category
 
     runs_dict = {}
+    for u in iou_thresholds:
+        for i in thresholds:
+            # result = subprocess.run(['./darknet',
+            #                          'detector',
+            #                          'map',
+            #                          path_conf['yolo_obj.data'],
+            #                          path_conf['yolo_cfg'],
+            #                          path_conf['yolo_weights'],
+            #                          '-thresh',
+            #                          str(i),
+            #                          '-iou-thresh',
+            #                          str(u)], stdout=subprocess.PIPE)
+            # result = result.stdout.decode('utf-8')
+            result = "calculation mAP (mean average precision)...\
+    408\
+     detections_count = 1276, unique_truth_count = 701\
+    class_id = 0, name = lock, ap = 86.82%           (TP = 279, FP = 9)\
+    class_id = 1, name = rack, ap = 80.40%           (TP = 225, FP = 23)\
+    \
+     for thresh = 0.50, precision = 0.94, recall = 0.72, F1-score = 0.81\
+     for thresh = 0.50, TP = 504, FP = 32, FN = 197, average IoU = 70.68 %\
+    \
+     IoU threshold = 50 %, used Area-Under-Curve for each unique Recall\
+     mean average precision (mAP@0.50) = 0.836113, or 83.61 %\
+    Total Detection Time: 33.000000 Seconds"
+            # per-class TP, FP and NP are sorted 0 to n, where n is number of classes
 
-    for i in thresholds:
-        result = subprocess.run(['./darknet',
-                                 'detector',
-                                 'map',
-                                 path_conf['yolo_obj.data'],
-                                 path_conf['yolo_cfg'],
-                                 path_conf['yolo_weights'],
-                                 '-thresh',
-                                 str(i),
-                                 '-iou-thresh',
-                                 str(iou_thresh)], stdout=subprocess.PIPE)
-        result = result.stdout.decode('utf-8')
-#         result = "calculation mAP (mean average precision)...\
-# 408\
-#  detections_count = 1276, unique_truth_count = 701\
-# class_id = 0, name = lock, ap = 86.82%           (TP = 279, FP = 9)\
-# class_id = 1, name = rack, ap = 80.40%           (TP = 225, FP = 23)\
-# \
-#  for thresh = 0.50, precision = 0.94, recall = 0.72, F1-score = 0.81\
-#  for thresh = 0.50, TP = 504, FP = 32, FN = 197, average IoU = 70.68 %\
-# \
-#  IoU threshold = 50 %, used Area-Under-Curve for each unique Recall\
-#  mean average precision (mAP@0.50) = 0.836113, or 83.61 %\
-# Total Detection Time: 33.000000 Seconds"
-        # per-class TP, FP and NP are sorted 0 to n, where n is number of classes
+            results = {k: re.findall(v, result) for k, v in patterns.items()}
 
-        results = {k: re.findall(v, result) for k, v in patterns.items()}
-
-        # convert types in the results
-        # if single element in list change to scalar
-        copy_results = {k: v for k, v in results.items()}
-        for k, v in results.items():
-            repl_list = []
-            if type(v) is list:
-                for j in v:
-                    try:
-                        repl_list.append(int(j))
-                    except ValueError:  # converting to int when there's a dot in a string raises a ValueError
+            # convert types in the results
+            # if single element in list change to scalar
+            copy_results = {k: v for k, v in results.items()}
+            for k, v in results.items():
+                repl_list = []
+                if type(v) is list:
+                    for j in v:
                         try:
-                            repl_list.append(float(j))
-                        except ValueError:
-                            repl_list.append(j)  # finally it can be just a string
-            v = repl_list
-            if len(v) == 1:
-                copy_results[k] = v[0]
-            else:
-                copy_results[k] = v
+                            repl_list.append(int(j))
+                        except ValueError:  # converting to int when there's a dot in a string raises a ValueError
+                            try:
+                                repl_list.append(float(j))
+                            except ValueError:
+                                repl_list.append(j)  # finally it can be just a string
+                v = repl_list
+                if len(v) == 1:
+                    copy_results[k] = v[0]
+                else:
+                    copy_results[k] = v
 
-        # FN = all - TP
-        # Recall = TP / (TP + FN)
-        # Precision = TP / (TP + FP)
-        np_all = np.array(category_counts)
-        np_fn = np_all - np.array(copy_results['TP_'])
-        np_tp = np.array(copy_results['TP_'])
-        np_fp = np.array(copy_results['FP_'])
-        copy_results['FN_'] = list(np_fn)
-        copy_results['recall_'] = list(np_tp/np_all)
-        copy_results['precision_'] = list(np_tp/(np_tp + np_fp))
-        results = {k: v for k, v in copy_results.items()}  # update results with the copy
-        for k, v in results.items():
-            if hasattr(v, '__iter__'):
-                for idx, val in enumerate(v):  # [0, 1, 2, 3]
-                    if k == 'thresh':
-                        copy_results[k] = val  # right now YOLO doesn't allow to separately manipulate thresholds
-                                               # for each class, so we just select the first element of the list
-                    else:
-                        new_key = k + f'{results["class_names"][idx]}'
-                        copy_results[new_key] = val
+            # FN = all - TP
+            # Recall = TP / (TP + FN)
+            # Precision = TP / (TP + FP)
+            np_all = np.array(category_counts)
+            np_fn = np_all - np.array(copy_results['TP_'])
+            np_tp = np.array(copy_results['TP_'])
+            np_fp = np.array(copy_results['FP_'])
+            copy_results['FN_'] = list(np_fn)
+            copy_results['recall_'] = list(np_tp/np_all)
+            copy_results['precision_'] = list(np_tp/(np_tp + np_fp))
+            results = {k: v for k, v in copy_results.items()}  # update results with the copy
+            for k, v in results.items():
+                if hasattr(v, '__iter__'):
+                    for idx, val in enumerate(v):  # [0, 1, 2, 3]
+                        if k == 'thresh':
+                            copy_results[k] = val  # right now YOLO doesn't allow to separately manipulate thresholds
+                                                   # for each class, so we just select the first element of the list
+                        else:
+                            new_key = k + f'{results["class_names"][idx]}'
+                            copy_results[new_key] = val
 
-        runs_dict[i] = copy_results  # throw in results dict into dict collecting all the runs
-
+            runs_dict[(u, i)] = copy_results  # throw in results dict into dict collecting all the runs
+    print(runs_dict)
     metrics_dict = {k: [] for k in metrics}  # initialize dict with empty lists for metrics
     for run, result_dict in runs_dict.items():
         for k, v in result_dict.items():
             if k in metrics:
-                metrics_dict[k].append(v)
-    """{
-        'map': [0.83, 0.98, 0.45],
-        'FP_per_class': [[9, 23], [9, 23], [9, 23]]
-    }"""
+                metrics_dict[k].append((run, v))
+    """{(metric): {(run): (value of the metric)}}"""
     temp = []
     for i in optimization:  # make min/max strings to correspond to np.argmin/np.argmax
         if i == 'max':
@@ -182,14 +181,15 @@ def fubar_benchmark_function(thresh_linspace_div=10,
     }    
     """
     final_out = {}
-    for metric, list_of_vals in metrics_dict.items():
+    for metric, run_val_tuple in metrics_dict.items():
+        run_id, list_of_vals = run_val_tuple
         func = optimization_dict[metric]
         idx = func(list_of_vals)
-        print(f'Confidence threshold {thresholds[idx]} is optimal with respect to metric {metric}.')
-        print(f'Value of metric {metric} for threshold {thresholds[idx]} is {list_of_vals[idx]}')
+        print(f'Confidence threshold {run_id[1]} and IoU threshold {run_id[0]} is optimal with respect to metric {metric}.')
+        print(f'Value of metric {metric} for those thresholds is {list_of_vals[idx]}')
         for k in add_metrics:
-            print(f'Value of metric {k} for threshold {thresholds[idx]} is {runs_dict[thresholds[idx]][k]}')
-        print(f"Mean average precision @ IoU {iou_thresh} is {runs_dict[thresholds[idx]]['map']}")
+            print(f'Value of metric {k} for those thresholds is {runs_dict[run_id][k]}')
+        print(f"Mean average precision @ IoU {iou_thresh} is {runs_dict[run_id]['map']}")
         print(f'Function used for evaluation: {func}')
         print('\n\n')
         final_out[metric] = dict(confidence_threshold=thresholds[idx], value=list_of_vals[idx])
@@ -207,9 +207,12 @@ if __name__ == '__main__':
     ap.add_argument("-t", "--thresh_div",
                     help="confidence threshold bucket size, default is 10",
                     default=10)
-    ap.add_argument("-i", "--iou_thresh",
+    ap.add_argument("-i_t", "--iou_thresh",
                     help="IoU threshold to check mAP at, default is 0.5",
                     default=0.5)
+    ap.add_argument("-i", "--iou_div",
+                    help="IoU threshold to check mAP at, default is 0.5",
+                    default=10)
     ap.add_argument('-m', '--metrics', nargs='+',
                     help='metrics keys to be used for optimization',
                     default=['map'])
@@ -223,6 +226,7 @@ if __name__ == '__main__':
 
     ret = fubar_benchmark_function(thresh_linspace_div=int(args['thresh_div']),
                                    iou_thresh=args['iou_thresh'],
+                                   iou_thresh_linspace_div=args['iou_div'],
                                    metrics=args['metrics'],
                                    optimization=args['optimization'],
                                    add_metrics=args['add_metrics'],
