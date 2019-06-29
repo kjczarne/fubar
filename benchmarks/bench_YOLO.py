@@ -157,12 +157,12 @@ def fubar_benchmark_function(thresh_linspace_div=10,
             runs_dict[(u, i)] = copy_results  # throw in results dict into dict collecting all the runs
     # print(runs_dict)
     metrics_dict = {k: [] for k in metrics}  # initialize dict with empty lists for metrics
-    selected_runs_dict = {}
+    selected_runs_dict = {k: [] for k in metrics}
     for run, result_dict in runs_dict.items():
         for k, v in result_dict.items():
             if k in metrics:
                 metrics_dict[k].append(v)
-                selected_runs_dict[run] = v
+                selected_runs_dict[k].append(run)
     """{(metric): {(run): (value of the metric)}}"""
     print(metrics_dict)
     temp = []
@@ -187,7 +187,7 @@ def fubar_benchmark_function(thresh_linspace_div=10,
     for metric, list_of_vals in metrics_dict.items():
         func = optimization_dict[metric]
         idx = func(list_of_vals)
-        run_id = selected_runs_dict[idx]
+        run_id = selected_runs_dict[metric][idx]
         print(f'Confidence threshold {run_id[1]} and IoU threshold {run_id[0]} is optimal with respect to metric {metric}.')
         print(f'Value of metric {metric} for those thresholds is {list_of_vals[idx]}')
         for k in add_metrics:
