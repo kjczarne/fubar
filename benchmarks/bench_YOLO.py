@@ -28,17 +28,17 @@ def count(directory):
     return out_dict
 
 
-def fubar_benchmark_function(thresh_linspace_div=10,
-                             iou_thresh_linspace_div=10,
-                             iou_thresh=0.5,
+def fubar_benchmark_function(thresh_linspace_div=4,
+                             iou_thresh_linspace_div=4,
                              metrics=('map'),
                              optimization=('max'),
                              add_metrics=('recall', 'precision', 'TP_', 'FP_', 'FN_'),
                              return_val=None):
     """
-    benchmarking function
+    benchmarking function, iterates over bucketed IoU and confidence thresholds and returns optimal
+    solution for minimization or maximization of a specific metric
     :param thresh_linspace_div: number of buckets between 0 and 1 to set for confidence threshold
-    :param iou_thresh: iou threshold for mAP calculation
+    :param iou_thresh_linspace_div: number of buckets between 0 and 1 to set for IoU threshold
     :param metrics: list of metrics to be used for evaluation, can be:
         * precision
         * recall
@@ -48,8 +48,11 @@ def fubar_benchmark_function(thresh_linspace_div=10,
         * FN
         * TP_<class name>
         * FP_<class name>
+        * FN_<class name>
         * ap_<class name>
         * map
+        * precision_<class name>
+        * recall_<class name>
     :param optimization: list of functions to be used for evaluation, allows two strings: 'min' and 'max' or any
                          arbitrary function returning numpy array index
                          order must reflect order of metrics being
@@ -62,7 +65,9 @@ def fubar_benchmark_function(thresh_linspace_div=10,
     os.chdir(path_conf['yolo_darknet_app'])
     thresholds = np.linspace(0.05, 0.99, thresh_linspace_div)
     iou_thresholds = np.linspace(0.05, 0.99, iou_thresh_linspace_div)
-    print(f"Searching through thresholds: {thresholds}")
+    print(f"Searching through confidence thresholds: {thresholds}")
+    print(f"Searching through IoU thresholds: {iou_thresholds}")
+    print('\n')
     patterns = {
         'precision': r'(?<=precision = )\d\.\d+',
         'recall': r'(?<=recall = )\d\.\d+',
@@ -155,7 +160,7 @@ def fubar_benchmark_function(thresh_linspace_div=10,
                             copy_results[new_key] = val
 
             runs_dict[(u, i)] = copy_results  # throw in results dict into dict collecting all the runs
-    # print(runs_dict)
+
     metrics_dict = {k: [] for k in metrics}  # initialize dict with empty lists for metrics
     selected_runs_dict = {k: [] for k in metrics}
     for run, result_dict in runs_dict.items():
@@ -163,8 +168,6 @@ def fubar_benchmark_function(thresh_linspace_div=10,
             if k in metrics:
                 metrics_dict[k].append(v)
                 selected_runs_dict[k].append(run)
-    """{(metric): {(run): (value of the metric)}}"""
-    print(metrics_dict)
     temp = []
     for i in optimization:  # make min/max strings to correspond to np.argmin/np.argmax
         if i == 'max':
@@ -177,22 +180,23 @@ def fubar_benchmark_function(thresh_linspace_div=10,
             else:
                 raise TypeError('optimization methods should be functions or "min"/"max" strings')
     optimization_dict = dict(zip(metrics, temp))
-    """
-    {
-        'map': np.argmax
-        'FP_per_class': np.argmin
-    }    
-    """
+
     final_out = {}
+    metrics_to_compare = metrics_dict.keys()
     for metric, list_of_vals in metrics_dict.items():
         func = optimization_dict[metric]
         idx = func(list_of_vals)
         run_id = selected_runs_dict[metric][idx]
         print(f'Confidence threshold {run_id[1]} and IoU threshold {run_id[0]} is optimal with respect to metric {metric}.')
         print(f'Value of metric {metric} for those thresholds is {list_of_vals[idx]}')
+        for k in metrics_to_compare:
+            if k in add_metrics:
+                pass
+            else:
+                add_metrics.insert(0, k)
         for k in add_metrics:
             print(f'Value of metric {k} for those thresholds is {runs_dict[run_id][k]}')
-        print(f"Mean average precision @ IoU {iou_thresh} is {runs_dict[run_id]['map']}")
+        print(f"Mean average precision @ IoU {run_id[0]} is {runs_dict[run_id]['map']}")
         print(f'Function used for evaluation: {func}')
         print('\n\n')
         final_out[metric] = dict(confidence_threshold=thresholds[idx], value=list_of_vals[idx])
@@ -208,14 +212,11 @@ def fubar_benchmark_function(thresh_linspace_div=10,
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument("-t", "--thresh_div",
-                    help="confidence threshold bucket size, default is 10",
-                    default=10)
-    ap.add_argument("-i_t", "--iou_thresh",
-                    help="IoU threshold to check mAP at, default is 0.5",
-                    default=0.5)
+                    help="confidence threshold bucket size, default is 4",
+                    default=4)
     ap.add_argument("-i", "--iou_div",
-                    help="IoU threshold to check mAP at, default is 0.5",
-                    default=10)
+                    help="IoU threshold bucket size, default is 4",
+                    default=4)
     ap.add_argument('-m', '--metrics', nargs='+',
                     help='metrics keys to be used for optimization',
                     default=['map'])
@@ -228,7 +229,6 @@ if __name__ == '__main__':
     args = vars(ap.parse_args())
 
     ret = fubar_benchmark_function(thresh_linspace_div=int(args['thresh_div']),
-                                   iou_thresh=args['iou_thresh'],
                                    iou_thresh_linspace_div=args['iou_div'],
                                    metrics=args['metrics'],
                                    optimization=args['optimization'],
