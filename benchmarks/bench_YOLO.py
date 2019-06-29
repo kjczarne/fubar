@@ -30,9 +30,9 @@ def count(directory):
 
 def fubar_benchmark_function(thresh_linspace_div=10,
                              iou_thresh=0.5,
-                             metrics=['map'],
-                             optimization=['max'],
-                             add_metrics=['recall', 'precision', 'TP_', 'FP_', 'FN_', ],
+                             metrics=('map'),
+                             optimization=('max'),
+                             add_metrics=('recall', 'precision', 'TP_', 'FP_', 'FN_'),
                              return_val=None):
     """
     benchmarking function
@@ -84,29 +84,29 @@ def fubar_benchmark_function(thresh_linspace_div=10,
     runs_dict = {}
 
     for i in thresholds:
-        # result = subprocess.run(['./darknet',
-        #                          'detector',
-        #                          'map',
-        #                          path_conf['yolo_obj.data'],
-        #                          path_conf['yolo_cfg'],
-        #                          path_conf['yolo_weights'],
-        #                          '-thresh',
-        #                          str(i),
-        #                          '-iou-thresh',
-        #                          str(iou_thresh)], stdout=subprocess.PIPE)
-        # result = result.stdout.decode('utf-8')
-        result = "calculation mAP (mean average precision)...\
-408\
- detections_count = 1276, unique_truth_count = 701\
-class_id = 0, name = lock, ap = 86.82%           (TP = 279, FP = 9)\
-class_id = 1, name = rack, ap = 80.40%           (TP = 225, FP = 23)\
-\
- for thresh = 0.50, precision = 0.94, recall = 0.72, F1-score = 0.81\
- for thresh = 0.50, TP = 504, FP = 32, FN = 197, average IoU = 70.68 %\
-\
- IoU threshold = 50 %, used Area-Under-Curve for each unique Recall\
- mean average precision (mAP@0.50) = 0.836113, or 83.61 %\
-Total Detection Time: 33.000000 Seconds"
+        result = subprocess.run(['./darknet',
+                                 'detector',
+                                 'map',
+                                 path_conf['yolo_obj.data'],
+                                 path_conf['yolo_cfg'],
+                                 path_conf['yolo_weights'],
+                                 '-thresh',
+                                 str(i),
+                                 '-iou-thresh',
+                                 str(iou_thresh)], stdout=subprocess.PIPE)
+        result = result.stdout.decode('utf-8')
+#         result = "calculation mAP (mean average precision)...\
+# 408\
+#  detections_count = 1276, unique_truth_count = 701\
+# class_id = 0, name = lock, ap = 86.82%           (TP = 279, FP = 9)\
+# class_id = 1, name = rack, ap = 80.40%           (TP = 225, FP = 23)\
+# \
+#  for thresh = 0.50, precision = 0.94, recall = 0.72, F1-score = 0.81\
+#  for thresh = 0.50, TP = 504, FP = 32, FN = 197, average IoU = 70.68 %\
+# \
+#  IoU threshold = 50 %, used Area-Under-Curve for each unique Recall\
+#  mean average precision (mAP@0.50) = 0.836113, or 83.61 %\
+# Total Detection Time: 33.000000 Seconds"
         # per-class TP, FP and NP are sorted 0 to n, where n is number of classes
 
         results = {k: re.findall(v, result) for k, v in patterns.items()}
@@ -154,52 +154,6 @@ Total Detection Time: 33.000000 Seconds"
 
         runs_dict[i] = copy_results  # throw in results dict into dict collecting all the runs
 
-    """
-    {0.0: {'precision': 0.94, 
-    'recall': 0.72, 
-    'F1': 0.81, 
-    'TP': 504, 
-    'FP': 32, 
-    'FN': 197, 
-    'TP_': ['279', '225'], 
-    'FP_': ['9', '23'], 
-    'ap_': ['86.82', '80.40'], 
-    'iou_thresh': 50, 
-    'thresh': 0.5, 
-    'class_names': ['lock', 'rack'], 
-    'map': 0.836113, 
-    'FN_': [72, 126, 71, 125], 
-    'recall_': [0.7948717948717948, 0.6410256410256411, 0.7971428571428572, 0.6428571428571429], 
-    'precision_': [0.96875, 0.9615384615384616, 0.9238410596026491, 0.907258064516129], 
-    'TP__lock': 279, 
-    'TP__rack': 225, 
-    'FP__lock': 9, 
-    'FP__rack': 23, 
-    'ap__lock': 86.82, 
-    'ap__rack': 80.4, 
-    'class_names_lock': 'lock', 
-    'class_names_rack': 'rack'}}
-    """
-
-    """{0: 
-            {'precision': 0.94, 
-            'recall': 0.72, 
-            'F1': 0.81, 
-            'TP': 504, 
-            'FP': 32, 
-            'FN': 197, 
-            'TP_lock': 279
-            'TP_rack': 225,
-            'FP_lock': 9, 
-            'FP_rack': 23, 
-            'ap_lock': 86.82
-            'ap_rack': 80.4, 
-            'iou_thresh': 50, 
-            'thresh': 0.5,
-            'class_names': ['lock', 'rack'], 
-            'map': 0.836113}
-        }"""
-    print(runs_dict)
     metrics_dict = {k: [] for k in metrics}  # initialize dict with empty lists for metrics
     for run, result_dict in runs_dict.items():
         for k, v in result_dict.items():
@@ -234,9 +188,9 @@ Total Detection Time: 33.000000 Seconds"
         print(f'Confidence threshold {thresholds[idx]} is optimal with respect to metric {metric}.')
         print(f'Value of metric {metric} for threshold {thresholds[idx]} is {list_of_vals[idx]}')
         for k in add_metrics:
-            print('Additional selected metrics:')
             print(f'Value of metric {k} for threshold {thresholds[idx]} is {runs_dict[thresholds[idx]][k]}')
         print(f'Function used for evaluation: {func}')
+        print('\n\n')
         final_out[metric] = dict(confidence_threshold=thresholds[idx], value=list_of_vals[idx])
 
     os.chdir(cwd)  # get back to original working directory
