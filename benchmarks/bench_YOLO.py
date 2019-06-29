@@ -1,8 +1,6 @@
 import os
 import subprocess
 import re
-import cv2
-from PIL import Image
 import numpy as np
 import argparse
 import sys
@@ -28,15 +26,19 @@ def count(directory):
     return out_dict
 
 
-def fubar_benchmark_function(thresh_linspace_div=4,
+def fubar_benchmark_function(min_max_thresh=(0.05, 0.99),
+                             min_max_iou=(0.05, 0.99),
+                             thresh_linspace_div=4,
                              iou_thresh_linspace_div=4,
-                             metrics=('map'),
-                             optimization=('max'),
-                             add_metrics=('recall', 'precision', 'TP_', 'FP_', 'FN_'),
+                             metrics=tuple(['map']),
+                             optimization=tuple(['max']),
+                             add_metrics=tuple(['recall', 'precision', 'TP_', 'FP_', 'FN_']),
                              return_val=None):
     """
     benchmarking function, iterates over bucketed IoU and confidence thresholds and returns optimal
     solution for minimization or maximization of a specific metric
+    :param min_max_thresh: tuple specifying min and max of a linspace to search from for confidence threshold
+    :param min_max_iou: tuple specifying min and max of a linspace to search from for IoU threshold
     :param thresh_linspace_div: number of buckets between 0 and 1 to set for confidence threshold
     :param iou_thresh_linspace_div: number of buckets between 0 and 1 to set for IoU threshold
     :param metrics: list of metrics to be used for evaluation, can be:
@@ -59,12 +61,16 @@ def fubar_benchmark_function(thresh_linspace_div=4,
                          evaluated, e.g. if your metrics=['map', 'FN'] and you want to maximize mAP and minimize
                          false negatives, use ['max', 'min']
     :param return_val: set to anything but None if you want the function to return the data apart from only printing it
+    :param add_metrics: list of additional metric keys to be printed during run
     :return: None or final_out dict ({metrics: {confidence_threshold, value}})
+
+    Extras: to get the values of recall and precision for a ROC curve, set the IoU min and max to a desired threshold
+            and use only the confidence threshold range and set return_val to 'roc'
     """
     cwd = os.getcwd()
     os.chdir(path_conf['yolo_darknet_app'])
-    thresholds = np.linspace(0.05, 0.99, thresh_linspace_div)
-    iou_thresholds = np.linspace(0.05, 0.99, iou_thresh_linspace_div)
+    thresholds = np.linspace(float(min_max_thresh[0]), float(min_max_thresh[1]), int(thresh_linspace_div))
+    iou_thresholds = np.linspace(float(min_max_iou[0]), float(min_max_iou[1]), int(iou_thresh_linspace_div))
     print(f"Searching through confidence thresholds: {thresholds}")
     print(f"Searching through IoU thresholds: {iou_thresholds}")
     print('\n')
@@ -102,19 +108,6 @@ def fubar_benchmark_function(thresh_linspace_div=4,
                                      '-iou-thresh',
                                      str(u)], stdout=subprocess.PIPE)
             result = result.stdout.decode('utf-8')
-    #         result = "calculation mAP (mean average precision)...\
-    # 408\
-    #  detections_count = 1276, unique_truth_count = 701\
-    # class_id = 0, name = lock, ap = 86.82%           (TP = 279, FP = 9)\
-    # class_id = 1, name = rack, ap = 80.40%           (TP = 225, FP = 23)\
-    # \
-    #  for thresh = 0.50, precision = 0.94, recall = 0.72, F1-score = 0.81\
-    #  for thresh = 0.50, TP = 504, FP = 32, FN = 197, average IoU = 70.68 %\
-    # \
-    #  IoU threshold = 50 %, used Area-Under-Curve for each unique Recall\
-    #  mean average precision (mAP@0.50) = 0.836113, or 83.61 %\
-    # Total Detection Time: 33.000000 Seconds"
-    #         # per-class TP, FP and NP are sorted 0 to n, where n is number of classes
 
             results = {k: re.findall(v, result) for k, v in patterns.items()}
 
@@ -187,7 +180,8 @@ def fubar_benchmark_function(thresh_linspace_div=4,
         func = optimization_dict[metric]
         idx = func(list_of_vals)
         run_id = selected_runs_dict[metric][idx]
-        print(f'Confidence threshold {run_id[1]} and IoU threshold {run_id[0]} is optimal with respect to metric {metric}.')
+        print(f'Confidence threshold {run_id[1]} and IoU threshold {run_id[0]} '
+              f'is optimal with respect to metric {metric}.')
         print(f'Value of metric {metric} for those thresholds is {list_of_vals[idx]}')
         for k in metrics_to_compare:
             if k in add_metrics:
@@ -204,18 +198,34 @@ def fubar_benchmark_function(thresh_linspace_div=4,
         print(f"Mean average precision @ IoU {run_id[0]} is {runs_dict[run_id]['map']}")
         print(f'Function used for evaluation: {func}')
         print('\n\n')
-        final_out[metric] = dict(confidence_threshold=thresholds[idx], value=list_of_vals[idx])
+        final_out[metric] = dict(thresh=run_id[1], iou_thresh=run_id[0], value=list_of_vals[idx])
 
     os.chdir(cwd)  # get back to original working directory
 
     if return_val is not None:
         return final_out
+    elif return_val == 'roc':  # this extracts all recall and precision values for given threshold bins
+        subset = {}
+        for k, v in runs_dict.items():
+            precision_keys = re.findall(r'precision?\w+', ' '.join(v.keys()))
+            recall_keys = re.findall(r'recall?\w+', ' '.join(v.keys()))
+            for i in recall_keys:
+                subset[k] = v[i]
+            for i in precision_keys:
+                subset[k] = v[i]
+        return subset
     else:
         return None
 
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
+    ap.add_argument('-t_s', '--thresh_span', nargs='+',
+                    help='min and max of the threshold search space',
+                    default=[0.05, 0.99])
+    ap.add_argument('-i_s', '--iou_span', nargs='+',
+                    help='min and max of the IoU threshold search space',
+                    default=[0.05, 0.99])
     ap.add_argument("-t", "--thresh_div",
                     help="confidence threshold bucket size, default is 4",
                     default=4)
@@ -233,10 +243,12 @@ if __name__ == '__main__':
                     default=['recall', 'precision', 'TP_', 'FP_', 'FN_', ])
     args = vars(ap.parse_args())
 
-    ret = fubar_benchmark_function(thresh_linspace_div=int(args['thresh_div']),
+    ret = fubar_benchmark_function(min_max_thresh=args['thresh_span'],
+                                   min_max_iou=args['iou_span'],
+                                   thresh_linspace_div=int(args['thresh_div']),
                                    iou_thresh_linspace_div=args['iou_div'],
                                    metrics=args['metrics'],
                                    optimization=args['optimization'],
                                    add_metrics=args['add_metrics'],
                                    return_val=None)
-    print(ret)
+    # print(ret)
