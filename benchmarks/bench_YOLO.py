@@ -91,30 +91,30 @@ def fubar_benchmark_function(thresh_linspace_div=4,
     runs_dict = {}
     for u in iou_thresholds:
         for i in thresholds:
-            # result = subprocess.run(['./darknet',
-            #                          'detector',
-            #                          'map',
-            #                          path_conf['yolo_obj.data'],
-            #                          path_conf['yolo_cfg'],
-            #                          path_conf['yolo_weights'],
-            #                          '-thresh',
-            #                          str(i),
-            #                          '-iou-thresh',
-            #                          str(u)], stdout=subprocess.PIPE)
-            # result = result.stdout.decode('utf-8')
-            result = "calculation mAP (mean average precision)...\
-    408\
-     detections_count = 1276, unique_truth_count = 701\
-    class_id = 0, name = lock, ap = 86.82%           (TP = 279, FP = 9)\
-    class_id = 1, name = rack, ap = 80.40%           (TP = 225, FP = 23)\
-    \
-     for thresh = 0.50, precision = 0.94, recall = 0.72, F1-score = 0.81\
-     for thresh = 0.50, TP = 504, FP = 32, FN = 197, average IoU = 70.68 %\
-    \
-     IoU threshold = 50 %, used Area-Under-Curve for each unique Recall\
-     mean average precision (mAP@0.50) = 0.836113, or 83.61 %\
-    Total Detection Time: 33.000000 Seconds"
-            # per-class TP, FP and NP are sorted 0 to n, where n is number of classes
+            result = subprocess.run(['./darknet',
+                                     'detector',
+                                     'map',
+                                     path_conf['yolo_obj.data'],
+                                     path_conf['yolo_cfg'],
+                                     path_conf['yolo_weights'],
+                                     '-thresh',
+                                     str(i),
+                                     '-iou-thresh',
+                                     str(u)], stdout=subprocess.PIPE)
+            result = result.stdout.decode('utf-8')
+    #         result = "calculation mAP (mean average precision)...\
+    # 408\
+    #  detections_count = 1276, unique_truth_count = 701\
+    # class_id = 0, name = lock, ap = 86.82%           (TP = 279, FP = 9)\
+    # class_id = 1, name = rack, ap = 80.40%           (TP = 225, FP = 23)\
+    # \
+    #  for thresh = 0.50, precision = 0.94, recall = 0.72, F1-score = 0.81\
+    #  for thresh = 0.50, TP = 504, FP = 32, FN = 197, average IoU = 70.68 %\
+    # \
+    #  IoU threshold = 50 %, used Area-Under-Curve for each unique Recall\
+    #  mean average precision (mAP@0.50) = 0.836113, or 83.61 %\
+    # Total Detection Time: 33.000000 Seconds"
+    #         # per-class TP, FP and NP are sorted 0 to n, where n is number of classes
 
             results = {k: re.findall(v, result) for k, v in patterns.items()}
 
