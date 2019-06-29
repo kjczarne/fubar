@@ -155,13 +155,14 @@ def fubar_benchmark_function(thresh_linspace_div=10,
                             copy_results[new_key] = val
 
             runs_dict[(u, i)] = copy_results  # throw in results dict into dict collecting all the runs
-    print(runs_dict)
+    # print(runs_dict)
     metrics_dict = {k: [] for k in metrics}  # initialize dict with empty lists for metrics
     for run, result_dict in runs_dict.items():
         for k, v in result_dict.items():
             if k in metrics:
                 metrics_dict[k].append((run, v))
     """{(metric): {(run): (value of the metric)}}"""
+    print(metrics_dict)
     temp = []
     for i in optimization:  # make min/max strings to correspond to np.argmin/np.argmax
         if i == 'max':
