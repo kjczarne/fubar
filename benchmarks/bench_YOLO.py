@@ -191,9 +191,9 @@ def fubar_benchmark_function(thresh_linspace_div=4,
         print(f'Value of metric {metric} for those thresholds is {list_of_vals[idx]}')
         for k in metrics_to_compare:
             if k in add_metrics:
-                pass
-            elif k == metrics:
-                pass
+                continue
+            elif k == metric:
+                continue
             else:
                 add_metrics.insert(0, k)
         for k in add_metrics:
