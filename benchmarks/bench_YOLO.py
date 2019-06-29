@@ -192,6 +192,8 @@ def fubar_benchmark_function(thresh_linspace_div=4,
         for k in metrics_to_compare:
             if k in add_metrics:
                 pass
+            elif k == metrics:
+                pass
             else:
                 add_metrics.insert(0, k)
         for k in add_metrics:
