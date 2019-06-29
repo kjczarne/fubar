@@ -189,6 +189,7 @@ def fubar_benchmark_function(thresh_linspace_div=10,
         print(f'Value of metric {metric} for threshold {thresholds[idx]} is {list_of_vals[idx]}')
         for k in add_metrics:
             print(f'Value of metric {k} for threshold {thresholds[idx]} is {runs_dict[thresholds[idx]][k]}')
+        print(f"Mean average precision @ IoU {iou_thresh} is {runs_dict[thresholds[idx]]['map']}")
         print(f'Function used for evaluation: {func}')
         print('\n\n')
         final_out[metric] = dict(confidence_threshold=thresholds[idx], value=list_of_vals[idx])
