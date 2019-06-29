@@ -197,7 +197,10 @@ def fubar_benchmark_function(thresh_linspace_div=4,
             else:
                 add_metrics.insert(0, k)
         for k in add_metrics:
-            print(f'Value of metric {k} for those thresholds is {runs_dict[run_id][k]}')
+            if k == metric:
+                continue
+            else:
+                print(f'Value of metric {k} for those thresholds is {runs_dict[run_id][k]}')
         print(f"Mean average precision @ IoU {run_id[0]} is {runs_dict[run_id]['map']}")
         print(f'Function used for evaluation: {func}')
         print('\n\n')
