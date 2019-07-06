@@ -84,6 +84,7 @@ def upload_file():
             drawpath = os.path.join(app.config['UPLOAD_FOLDER'], 'draw.jpg')
             global pred
             pred = fubar_master_function(path, outfile_draw=drawpath)
+            print(pred)
             global message
             message = 'were detected'
             print("id: ", rack_location.id)
