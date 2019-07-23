@@ -13,7 +13,7 @@ def roc_curve_data(model,
                    negative_class,
                    tts):
     """
-    saves roc curve data to 3 separate text files (precision, recall and thresholds)
+    saves roc curve data to 3 separate text files (fpr, tpr and thresholds)
     :param model: Model instance implementing predict method
     :param positive_class: string specifying positive class name
     :param negative_class: string specifying negative class name
@@ -28,16 +28,16 @@ def roc_curve_data(model,
         tts=tts
     )
 
-    precision, recall, thresholds = roc_curve(y_true, y_pred)
+    fpr, tpr, thresholds = roc_curve(y_true, y_pred)
 
-    print(f'AUC is {auc(precision, recall)}')
+    print(f'AUC is {auc(fpr, tpr)}')
 
-    np.savetxt(filepattern('precision_', '.txt'), precision)
-    np.savetxt(filepattern('recall_', '.txt'), recall)
+    np.savetxt(filepattern('fpr_', '.txt'), fpr)
+    np.savetxt(filepattern('tpr_', '.txt'), tpr)
     np.savetxt(filepattern('thresholds_', '.txt'), thresholds)
 
 
-def load_roc_curve(precision_txt=None, recall_txt=None, thresholds_txt=None):
+def load_roc_curve(fpr_txt=None, tpr_txt=None, thresholds_txt=None):
 
     def sub(arg, strg):
         if arg is None:
@@ -46,11 +46,11 @@ def load_roc_curve(precision_txt=None, recall_txt=None, thresholds_txt=None):
             res = np.loadtxt(strg)
         return res
 
-    precision = sub(precision_txt, 'precision_')
-    recall = sub(recall_txt, 'recall_')
+    fpr = sub(fpr_txt, 'fpr_')
+    tpr = sub(tpr_txt, 'tpr_')
     thresholds = sub(thresholds_txt, 'thresholds_')
 
-    return precision, recall, thresholds
+    return fpr, tpr, thresholds
 
 
 if __name__ == '__main__':
