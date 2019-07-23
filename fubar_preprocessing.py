@@ -1,8 +1,13 @@
 from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
 import matplotlib
-from cnn_toolkit import pool_generator_classes
+from cnn_toolkit import pool_generator_classes, filepattern
 from fubar_CONF import hprm, paths
 matplotlib.use('TkAgg')
+
+#
+
+paths[1].to_csv(filepattern('test', '.csv'), index=False)
+paths[0].to_csv(filepattern('train', '.csv'), index=False)
 
 # -------------------
 # DATA PREPROCESSING |

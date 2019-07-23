@@ -1,4 +1,5 @@
-from cnn_toolkit import file_train_test_split, filepattern
+from cnn_toolkit import file_train_test_split, filepattern, get_fresh_weights_and_model
+import pandas as pd
 
 # ------------------------------
 # YOLO-CONFIG FOR MASTER SCRIPT |
@@ -23,6 +24,8 @@ tf_s_conf = dict(
     batch_size=1,
     signature_name='serving_default'
 )
+
+ignore_existing_train_test_split = False
 # ---------------------------------------------------------------------------------------------------------------------
 
 # ----------------------
@@ -46,10 +49,14 @@ path_conf = {
 
 file_formats = ['*.jpg', '*.jpeg', '*.png']
 path_to_archive = path_conf['cropped_images_for_training']
-paths = file_train_test_split(path_to_archive, file_formats, ignored_directories=['inference'])
-# we use default 80/20 split
-paths[1].to_csv(filepattern('test', '.csv'), index=False)
-paths[0].to_csv(filepattern('train', '.csv'), index=False)
+tr, t = get_fresh_weights_and_model(os.getcwd(), 'train*.csv', 'test*.csv')
+if len(t) == 0 or ignore_existing_train_test_split:
+    paths = file_train_test_split(path_to_archive, file_formats, ignored_directories=['inference'])
+    # we use default 80/20 split
+else:
+    paths = pd.read_csv(tr), pd.read_csv(t)
+    # but if any train-test split files already exist, we reuse them
+    # this way fubar_unfreeze won't perform another split before training but will reuse same val. data
 
 # ---------------------------------------------------------------------------------------------------------------------
 
