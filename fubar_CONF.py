@@ -50,7 +50,10 @@ path_conf = {
 
 file_formats = ['*.jpg', '*.jpeg', '*.png']
 path_to_archive = path_conf['cropped_images_for_training']
-tr, t = get_fresh_weights_and_model(os.getcwd(), 'train*.csv', 'test*.csv')
+try:
+    tr, t = get_fresh_weights_and_model(os.getcwd(), 'train*.csv', 'test*.csv')
+except IndexError:
+    t = []
 if len(t) == 0 or ignore_existing_train_test_split:
     paths = file_train_test_split(path_to_archive, file_formats, ignored_directories=['inference'])
     # we use default 80/20 split
