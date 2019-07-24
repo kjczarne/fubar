@@ -31,7 +31,7 @@ def filepattern(pattern, extension, defaulttag='0', add_string=""):
 
     globbed = glob.glob(expression)
 
-    lst = re.findall(r'[0-9]+(?=\.)', ''.join(globbed))
+    lst = re.findall(r'(?!_)[0-9]+', ''.join(globbed))  # expects '_\d+' pattern
 
     if defaulttag is None:
         defaulttag = '0'

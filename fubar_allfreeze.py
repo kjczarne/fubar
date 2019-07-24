@@ -95,12 +95,12 @@ y_pred = model.predict_generator(validation_generator,
 # --------------------------------------
 # export model structure to json file:
 model_struct_json = model.to_json()
-filename = filepattern('model_allfreeze', '.json')
+filename = filepattern('model_allfreeze_', '.json')
 with open(filename, 'w') as f:
     f.write(model_struct_json)
 
 # export weights to an hdf5 file:
-w_filename = filepattern('weights_allfreeze', '.h5')
+w_filename = filepattern('weights_allfreeze_', '.h5')
 model.save_weights(w_filename)
 # ---------------------------------------------------------------------------------------------------------------------
 

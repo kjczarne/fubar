@@ -33,7 +33,7 @@ print(hprm)
 # ----------------
 # RE-CREATE MODEL |
 # ----------------
-m, w = get_fresh_weights_and_model(os.getcwd(), 'model_allfreeze*', 'weights_allfreeze*')
+m, w = get_fresh_weights_and_model(os.getcwd(), 'model_allfreeze_*', 'weights_allfreeze_*')
 with open(m, 'r') as f:
     model = tf.keras.models.model_from_json(f.read())
 model.load_weights(w)
@@ -95,7 +95,7 @@ post_training_model = model.fit_generator(training_generator,
 # --------------------------------------
 # export model structure to json file:
 model_struct_json = model.to_json()
-filename = filepattern('model_partfreeze', '.json')
+filename = filepattern('model_partfreeze_', '.json')
 with open(filename, 'w') as f:
     f.write(model_struct_json)
 
