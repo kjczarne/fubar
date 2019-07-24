@@ -25,15 +25,14 @@ def filepattern(pattern, extension, defaulttag='0', add_string=""):
     :param add_string: additional string tag
     :return: returns a filename that follows the same pattern but has higher tag by 1
     """
-    expression = pattern + '[0-9]+' + extension
+    expression = pattern + '*' + extension
     # above matches integer tag and accepts any number of additional
     # characters before extension is matched
-
     globbed = glob.glob(expression)
 
     lst = re.findall(r'(?!_)[0-9]+', ''.join(globbed))  # expects '_\d+' pattern
     lst = [int(i) for i in lst]
-
+    
     if defaulttag is None:
         defaulttag = '0'
     else:
