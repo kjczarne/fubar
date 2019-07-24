@@ -6,8 +6,8 @@ matplotlib.use('TkAgg')
 
 #
 
-paths[1].to_csv(filepattern('test', '.csv'), index=False)
-paths[0].to_csv(filepattern('train', '.csv'), index=False)
+paths[1].to_csv(filepattern('test_', '.csv'), index=False)
+paths[0].to_csv(filepattern('train_', '.csv'), index=False)
 
 # -------------------
 # DATA PREPROCESSING |
