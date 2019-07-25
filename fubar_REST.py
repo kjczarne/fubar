@@ -10,7 +10,7 @@ def tf_serving_predict(image,
                        host,
                        port=8501,
                        model_name='fubar',
-                       model_version='4',
+                       model_version='1',
                        batch_size=1,
                        signature_name='serving_default'):
     """
