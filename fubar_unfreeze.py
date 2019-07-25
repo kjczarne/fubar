@@ -100,7 +100,7 @@ with open(filename, 'w') as f:
     f.write(model_struct_json)
 
 # export weights to an hdf5 file:
-w_filename = filepattern('weights_partfreeze', '.h5')
+w_filename = filepattern('weights_partfreeze_', '.h5')
 model.save_weights(w_filename)
 
 # ---------------------------------------------------------------------------------------------------------------------
