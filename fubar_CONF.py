@@ -21,7 +21,7 @@ tf_s_conf = dict(
     host='localhost',
     port='8501',
     model_name='fubar',
-    model_version='4',
+    model_version='1',
     batch_size=1,
     signature_name='serving_default'
 )
